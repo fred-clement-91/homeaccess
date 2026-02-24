@@ -181,11 +181,17 @@ async def update_tunnel(
         tunnel.target_port = data.target_port
     if data.is_active is not None:
         tunnel.is_active = data.is_active
+        if data.is_active:
+            wireguard_service.add_peer(tunnel.client_public_key, str(tunnel.vpn_ip))
+        else:
+            try:
+                wireguard_service.remove_peer(tunnel.client_public_key)
+            except Exception:
+                pass
 
     await db.commit()
     await db.refresh(tunnel)
 
-    # Regenerate HAProxy config to reflect changes
     await haproxy_service.regenerate_config(db)
 
     return _to_response(tunnel)

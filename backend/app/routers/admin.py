@@ -69,6 +69,18 @@ async def update_user(
 
     if data.is_active is not None:
         user.is_active = data.is_active
+        # Remove/restore all WireGuard peers on ban/unban
+        tunnels_result = await db.execute(
+            select(Tunnel).where(Tunnel.user_id == user.id)
+        )
+        for tunnel in tunnels_result.scalars().all():
+            try:
+                if data.is_active:
+                    wireguard_service.add_peer(tunnel.client_public_key, str(tunnel.vpn_ip))
+                else:
+                    wireguard_service.remove_peer(tunnel.client_public_key)
+            except Exception:
+                pass
     if data.max_tunnels is not None:
         user.max_tunnels = data.max_tunnels
 
@@ -184,6 +196,13 @@ async def admin_update_tunnel(
 
     if "is_active" in data:
         tunnel.is_active = data["is_active"]
+        if data["is_active"]:
+            wireguard_service.add_peer(tunnel.client_public_key, str(tunnel.vpn_ip))
+        else:
+            try:
+                wireguard_service.remove_peer(tunnel.client_public_key)
+            except Exception:
+                pass
 
     await db.commit()
     await db.refresh(tunnel)

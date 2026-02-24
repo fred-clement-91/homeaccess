@@ -3,7 +3,75 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HomeAccess - Acc&eacute;dez &agrave; vos &eacute;quipements partout</title>
+    <title>HomeAccess - Acc&eacute;dez &agrave; vos &eacute;quipements domestiques depuis partout</title>
+    <meta name="description" content="Acc&eacute;dez &agrave; vos cam&eacute;ras, NAS, domotique et serveurs depuis n'importe o&ugrave;, sans IP fixe. Tunnel VPN WireGuard s&eacute;curis&eacute; avec sous-domaine personnalis&eacute; et certificat SSL automatique." />
+    <meta name="keywords" content="acc&egrave;s distant, VPN, WireGuard, domotique, Home Assistant, NAS, cam&eacute;ras IP, sans IP fixe, sous-domaine, tunnel s&eacute;curis&eacute;, reverse proxy" />
+    <link rel="canonical" href="https://homeaccess.site/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://homeaccess.site/" />
+    <meta property="og:title" content="HomeAccess - Acc&eacute;dez &agrave; vos &eacute;quipements domestiques depuis partout" />
+    <meta property="og:description" content="Cam&eacute;ras, NAS, domotique, serveurs m&eacute;dia... Acc&eacute;dez &agrave; tous vos services domestiques via un sous-domaine s&eacute;curis&eacute;, sans IP fixe." />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="HomeAccess" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="HomeAccess - Acc&egrave;s distant s&eacute;curis&eacute; &agrave; vos &eacute;quipements" />
+    <meta name="twitter:description" content="Tunnel VPN WireGuard avec sous-domaine personnalis&eacute;. Sans IP fixe, sans configuration compliqu&eacute;e." />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "HomeAccess",
+      "url": "https://homeaccess.site",
+      "description": "Service d'acc\u00e8s distant s\u00e9curis\u00e9 pour \u00e9quipements domestiques via tunnel VPN WireGuard",
+      "applicationCategory": "NetworkingApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Ai-je besoin d'une IP fixe pour acc\u00e9der \u00e0 mes \u00e9quipements \u00e0 distance ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. HomeAccess utilise un tunnel VPN WireGuard pour connecter votre serveur domestique \u00e0 notre infrastructure. M\u00eame si votre adresse IP change, le tunnel reste actif et votre sous-domaine continue de fonctionner."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Quels \u00e9quipements puis-je rendre accessibles avec HomeAccess ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tout service h\u00e9berg\u00e9 chez vous : Home Assistant, Jeedom, cam\u00e9ras IP, NAS Synology ou TrueNAS, Jellyfin, Plex, Nextcloud, Gitea, et bien d'autres."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Est-ce que HomeAccess est s\u00e9curis\u00e9 ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui. Le trafic passe par un tunnel VPN WireGuard chiffr\u00e9. Chaque sous-domaine dispose automatiquement d'un certificat SSL Let's Encrypt. Aucune donn\u00e9e ne transite en clair."
+          }
+        }
+      ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />

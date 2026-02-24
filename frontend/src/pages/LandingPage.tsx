@@ -10,6 +10,7 @@ import {
   ComputerDesktopIcon,
   WifiIcon,
   ArrowRightIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 
 const devices = [
@@ -242,6 +243,51 @@ export default function LandingPage() {
               <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
               <p className="text-gray-400 text-sm">{feature.description}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="max-w-4xl mx-auto px-6 py-20">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl font-bold mb-4">Questions fréquentes</h2>
+        </div>
+
+        <div className="space-y-4">
+          {[
+            {
+              q: "Ai-je besoin d'une IP fixe ?",
+              a: "Non, c'est justement le principe de HomeAccess. Votre serveur domestique se connecte à notre infrastructure via un tunnel WireGuard. Même si votre adresse IP change, le tunnel reste actif et votre sous-domaine continue de fonctionner.",
+            },
+            {
+              q: "Quels équipements puis-je rendre accessibles ?",
+              a: "Tout service hébergé chez vous : Home Assistant, Jeedom, caméras IP, NAS Synology ou TrueNAS, Jellyfin, Plex, Nextcloud, Gitea, et bien d'autres. Il suffit que le service écoute sur un port HTTP ou HTTPS.",
+            },
+            {
+              q: "Est-ce sécurisé ?",
+              a: "Oui. Le trafic entre votre serveur et notre infrastructure passe par un tunnel VPN WireGuard chiffré. Votre sous-domaine dispose automatiquement d'un certificat SSL Let's Encrypt. Aucune donnée ne transite en clair.",
+            },
+            {
+              q: "Comment fonctionne le tunnel VPN ?",
+              a: "Lors de la création d'un tunnel, vous téléchargez un fichier de configuration WireGuard. Vous l'importez sur votre serveur domestique (ou un Raspberry Pi, un routeur, etc.). Le tunnel s'établit automatiquement et votre service devient accessible via votre-nom.homeaccess.site.",
+            },
+            {
+              q: "Combien de temps prend la mise en place ?",
+              a: "Moins de 5 minutes. Créez un compte, choisissez un sous-domaine, téléchargez la configuration WireGuard, et importez-la. Le certificat SSL est généré automatiquement.",
+            },
+          ].map((faq) => (
+            <details
+              key={faq.q}
+              className="group bg-gray-900/50 border border-gray-800/50 rounded-xl"
+            >
+              <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none text-white font-medium hover:bg-gray-800/30 rounded-xl transition-colors">
+                {faq.q}
+                <ChevronDownIcon className="w-5 h-5 text-gray-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <p className="px-6 pb-5 text-gray-400 text-sm leading-relaxed">
+                {faq.a}
+              </p>
+            </details>
           ))}
         </div>
       </section>
