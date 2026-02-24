@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /verify
+Disallow: /forgot-password
+
+Sitemap: https://homeaccess.site/sitemap.xml
