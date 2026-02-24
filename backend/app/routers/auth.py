@@ -20,10 +20,12 @@ from app.schemas.user import (
     UserResponse,
 )
 from app.services.auth import create_access_token, hash_password, verify_password
+from app.services.activity import log_activity
 from app.services.email import (
     generate_password,
     generate_verification_code,
     send_new_password_email,
+    send_new_user_notification,
     send_verification_email,
 )
 
@@ -68,6 +70,13 @@ async def register(request: Request, data: UserRegister, db: AsyncSession = Depe
         send_verification_email(data.email, code, password)
     except Exception:
         pass
+
+    try:
+        send_new_user_notification(data.email)
+    except Exception:
+        pass
+
+    await log_activity(db, data.email, "register")
 
     return user
 
@@ -167,6 +176,8 @@ async def login(request: Request, data: UserLogin, db: AsyncSession = Depends(ge
             status_code=status.HTTP_403_FORBIDDEN,
             detail="not_verified",
         )
+    await log_activity(db, user.email, "login")
+
     token = create_access_token(user.id)
     return TokenResponse(access_token=token)
 

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.services.activity import log_activity
 from app.models.tunnel import Tunnel
 from app.models.user import User
 from app.schemas.tunnel import SubdomainCheck, TunnelCreate, TunnelResponse, TunnelUpdate
@@ -155,6 +156,8 @@ async def create_tunnel(
     # Request SSL certificate for the subdomain (non-blocking failure)
     certbot_service.request_cert(subdomain)
 
+    await log_activity(db, user.email, "tunnel_create", detail=subdomain)
+
     return _to_response(tunnel)
 
 
@@ -194,6 +197,10 @@ async def update_tunnel(
 
     await haproxy_service.regenerate_config(db)
 
+    if data.is_active is not None:
+        state = "actif" if tunnel.is_active else "inactif"
+        await log_activity(db, user.email, "tunnel_toggle", detail=f"{tunnel.subdomain} → {state}")
+
     return _to_response(tunnel)
 
 
@@ -204,6 +211,7 @@ async def delete_tunnel(
     db: AsyncSession = Depends(get_db),
 ):
     tunnel = await _get_user_tunnel(tunnel_id, user.id, db)
+    subdomain = tunnel.subdomain
 
     # Remove WireGuard peer
     try:
@@ -216,6 +224,8 @@ async def delete_tunnel(
 
     # Regenerate HAProxy config
     await haproxy_service.regenerate_config(db)
+
+    await log_activity(db, user.email, "tunnel_delete", detail=subdomain)
 
 
 @router.get("/{tunnel_id}/config")

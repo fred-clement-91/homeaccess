@@ -6,10 +6,33 @@ import {
   LinkIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import api from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import type { AdminUser, AdminTunnel } from "../types";
+
+interface ActivityEntry {
+  id: string;
+  user_email: string;
+  action: string;
+  detail: string | null;
+  created_at: string;
+}
+
+const ACTION_LABELS: Record<string, { label: string; color: string }> = {
+  register: { label: "Inscription", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  login: { label: "Connexion", color: "bg-gray-700/50 text-gray-400 border-gray-600/30" },
+  tunnel_create: { label: "Création tunnel", color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
+  tunnel_delete: { label: "Suppression tunnel", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
+  tunnel_toggle: { label: "Toggle tunnel", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+  contact_send: { label: "Message contact", color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
+  admin_ban: { label: "Bannissement", color: "bg-red-500/10 text-red-400 border-red-500/20" },
+  admin_unban: { label: "Débannissement", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  admin_delete_user: { label: "Suppression compte", color: "bg-red-500/10 text-red-400 border-red-500/20" },
+  admin_toggle_tunnel: { label: "Toggle tunnel (admin)", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  admin_update_quota: { label: "Quota modifié", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+};
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -31,6 +54,15 @@ export default function AdminPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmBan, setConfirmBan] = useState<string | null>(null);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+
+  // Activity log state
+  const [showActivity, setShowActivity] = useState(false);
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityOffset, setActivityOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  const ACTIVITY_LIMIT = 30;
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -58,6 +90,29 @@ export default function AdminPage() {
       /* ignore */
     }
   }, []);
+
+  const fetchActivity = useCallback(
+    async (offset = 0, append = false) => {
+      setActivityLoading(true);
+      try {
+        const { data } = await api.get(
+          `/admin/activity?limit=${ACTIVITY_LIMIT}&offset=${offset}`
+        );
+        if (append) {
+          setActivity((prev) => [...prev, ...data]);
+        } else {
+          setActivity(data);
+        }
+        setHasMore(data.length === ACTIVITY_LIMIT);
+        setActivityOffset(offset + data.length);
+      } catch {
+        /* ignore */
+      } finally {
+        setActivityLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     Promise.all([fetchUsers(), fetchTunnels(), fetchStatus()]).finally(() =>
@@ -101,6 +156,13 @@ export default function AdminPage() {
     });
   };
 
+  const toggleActivity = () => {
+    if (!showActivity && activity.length === 0) {
+      fetchActivity(0);
+    }
+    setShowActivity((prev) => !prev);
+  };
+
   const tunnelsByUser: Record<string, AdminTunnel[]> = {};
   for (const t of tunnels) {
     if (!tunnelsByUser[t.user_id]) tunnelsByUser[t.user_id] = [];
@@ -135,6 +197,15 @@ export default function AdminPage() {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
+    });
+
+  const formatDateTime = (iso: string) =>
+    new Date(iso).toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
   return (
@@ -385,6 +456,83 @@ export default function AdminPage() {
               </div>
             );
           })
+        )}
+      </div>
+
+      {/* ---- Activity log ---- */}
+      <div className="mt-10">
+        <button
+          onClick={toggleActivity}
+          className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors cursor-pointer"
+        >
+          <ClockIcon className="w-5 h-5" />
+          Journal d'activité
+          {showActivity ? (
+            <ChevronDownIcon className="w-4 h-4" />
+          ) : (
+            <ChevronRightIcon className="w-4 h-4" />
+          )}
+        </button>
+
+        {showActivity && (
+          <div className="mt-4 space-y-2">
+            {activity.length === 0 && !activityLoading ? (
+              <p className="text-center text-gray-500 py-8">
+                Aucune activité enregistrée
+              </p>
+            ) : (
+              <>
+                {activity.map((entry) => {
+                  const actionInfo = ACTION_LABELS[entry.action] || {
+                    label: entry.action,
+                    color: "bg-gray-700/50 text-gray-400 border-gray-600/30",
+                  };
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className="flex items-center gap-4 bg-gray-900/50 border border-gray-800/50 rounded-lg px-4 py-3"
+                    >
+                      <span className="text-xs text-gray-500 whitespace-nowrap min-w-[120px]">
+                        {formatDateTime(entry.created_at)}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${actionInfo.color}`}
+                      >
+                        {actionInfo.label}
+                      </span>
+                      <span className="text-sm text-gray-300 truncate">
+                        {entry.user_email}
+                      </span>
+                      {entry.detail && (
+                        <span className="text-sm text-gray-500 truncate ml-auto">
+                          {entry.detail}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {hasMore && (
+                  <div className="text-center pt-2">
+                    <button
+                      onClick={() => fetchActivity(activityOffset, true)}
+                      disabled={activityLoading}
+                      className="px-4 py-2 text-sm text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {activityLoading ? "Chargement..." : "Charger plus"}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {activityLoading && activity.length === 0 && (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-indigo-500" />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

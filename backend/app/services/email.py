@@ -104,6 +104,29 @@ def send_new_password_email(to_email: str, password: str) -> None:
     _send_email(to_email, "HomeAccess - Nouveau mot de passe", html, text)
 
 
+def send_new_user_notification(user_email: str) -> None:
+    """Notify admin that a new user has registered."""
+    to_email = settings.contact_email
+    if not to_email:
+        return  # silently ignore if not configured
+
+    html = f"""\
+    <html>
+    <body style="font-family: 'Inter', sans-serif; background-color: #0a0a0f; color: #e5e7eb; padding: 40px;">
+        <div style="max-width: 480px; margin: 0 auto; background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 32px;">
+            <h2 style="color: #818cf8; margin-top: 0;">Nouvelle inscription</h2>
+            <p>Un nouvel utilisateur vient de s'inscrire sur HomeAccess :</p>
+            <div style="background: #1f2937; border-radius: 12px; padding: 16px; text-align: center; margin: 24px 0;">
+                <span style="font-size: 18px; font-weight: bold; color: #a5b4fc;">{user_email}</span>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    text = f"Nouvelle inscription HomeAccess : {user_email}"
+    _send_email(to_email, f"[HomeAccess] Nouvelle inscription : {user_email}", html, text)
+
+
 def send_contact_email(
     from_email: str,
     subject: str,

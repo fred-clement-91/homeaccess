@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -8,9 +8,11 @@ from sqlalchemy.orm import selectinload
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_admin
+from app.models.activity_log import ActivityLog
 from app.models.tunnel import Tunnel
 from app.models.user import User
 from app.schemas.user import AdminTunnelResponse, AdminUserResponse, AdminUserUpdate
+from app.services.activity import log_activity
 from app.services.haproxy import haproxy_service
 from app.services.wireguard import wireguard_service
 
@@ -81,8 +83,13 @@ async def update_user(
                     wireguard_service.remove_peer(tunnel.client_public_key)
             except Exception:
                 pass
+        action = "admin_unban" if data.is_active else "admin_ban"
+        await log_activity(db, admin.email, action, detail=user.email)
+
     if data.max_tunnels is not None:
+        old_max = user.max_tunnels
         user.max_tunnels = data.max_tunnels
+        await log_activity(db, admin.email, "admin_update_quota", detail=f"{user.email}: {old_max} → {data.max_tunnels}")
 
     await db.commit()
     await db.refresh(user)
@@ -122,6 +129,8 @@ async def delete_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    user_email = user.email
+
     # Remove all WireGuard peers before DB cascade delete
     for tunnel in user.tunnels:
         try:
@@ -134,6 +143,8 @@ async def delete_user(
 
     # Regenerate HAProxy config
     await haproxy_service.regenerate_config(db)
+
+    await log_activity(db, admin.email, "admin_delete_user", detail=user_email)
 
 
 # ---- Tunnels ----
@@ -209,6 +220,10 @@ async def admin_update_tunnel(
 
     await haproxy_service.regenerate_config(db)
 
+    if "is_active" in data:
+        state = "actif" if tunnel.is_active else "inactif"
+        await log_activity(db, _admin.email, "admin_toggle_tunnel", detail=f"{tunnel.subdomain} → {state}")
+
     return AdminTunnelResponse(
         id=tunnel.id,
         user_id=tunnel.user_id,
@@ -220,3 +235,33 @@ async def admin_update_tunnel(
         full_domain=f"{tunnel.subdomain}.{settings.domain}",
         created_at=tunnel.created_at,
     )
+
+
+# ---- Activity log ----
+
+
+@router.get("/activity")
+async def list_activity(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    _admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return recent activity log entries (newest first)."""
+    result = await db.execute(
+        select(ActivityLog)
+        .order_by(ActivityLog.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    logs = result.scalars().all()
+    return [
+        {
+            "id": str(log.id),
+            "user_email": log.user_email,
+            "action": log.action,
+            "detail": log.detail,
+            "created_at": log.created_at.isoformat(),
+        }
+        for log in logs
+    ]

@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
+from app.services.activity import log_activity
 from app.services.email import send_contact_email
 
 router = APIRouter()
@@ -49,5 +50,7 @@ async def contact(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Service de contact indisponible",
         ) from exc
+
+    await log_activity(db, user.email, "contact_send", detail=subject)
 
     return None
