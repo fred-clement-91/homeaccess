@@ -155,12 +155,12 @@ async def login(request: Request, data: UserLogin, db: AsyncSession = Depends(ge
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Email ou mot de passe incorrect",
         )
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is deactivated",
+            detail="Ce compte a \u00e9t\u00e9 d\u00e9sactiv\u00e9",
         )
     if not user.is_verified:
         raise HTTPException(

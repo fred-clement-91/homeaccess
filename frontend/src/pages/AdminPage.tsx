@@ -29,6 +29,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmBan, setConfirmBan] = useState<string | null>(null);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   const fetchUsers = useCallback(async () => {
@@ -113,6 +114,7 @@ export default function AdminPage() {
 
   const handleToggleBan = async (u: AdminUser) => {
     await api.patch(`/admin/users/${u.id}`, { is_active: !u.is_active });
+    setConfirmBan(null);
     fetchUsers();
   };
 
@@ -237,17 +239,41 @@ export default function AdminPage() {
 
                     {!u.is_admin && (
                       <>
-                        <button
-                          onClick={() => handleToggleBan(u)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                            u.is_active
-                              ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
-                              : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
-                          }`}
-                          title={u.is_active ? "Bannir" : "Débannir"}
-                        >
-                          <ShieldExclamationIcon className="w-4 h-4" />
-                        </button>
+                        {confirmBan === u.id ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-gray-400">
+                              {u.is_active ? "Bannir ?" : "Débannir ?"}
+                            </span>
+                            <button
+                              onClick={() => handleToggleBan(u)}
+                              className={`px-3 py-1.5 rounded-lg text-white text-xs font-medium transition-all cursor-pointer ${
+                                u.is_active
+                                  ? "bg-red-600 hover:bg-red-500"
+                                  : "bg-emerald-600 hover:bg-emerald-500"
+                              }`}
+                            >
+                              Oui
+                            </button>
+                            <button
+                              onClick={() => setConfirmBan(null)}
+                              className="px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 text-xs font-medium hover:bg-gray-700 transition-all cursor-pointer"
+                            >
+                              Non
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmBan(u.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                              u.is_active
+                                ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                                : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                            }`}
+                          >
+                            <ShieldExclamationIcon className="w-4 h-4" />
+                            {u.is_active ? "Bannir" : "Débannir"}
+                          </button>
+                        )}
 
                         {confirmDelete === u.id ? (
                           <div className="flex items-center gap-1.5">
