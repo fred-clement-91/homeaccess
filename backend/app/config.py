@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     certbot_http_port: int = 8402
     certbot_email: str = "admin@homeaccess.site"
 
+    # Contact
+    contact_email: str = ""
+
     # SMTP
     smtp_host: str = "localhost"
     smtp_port: int = 587

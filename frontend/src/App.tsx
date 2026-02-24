@@ -9,6 +9,7 @@ import VerifyPage from "./pages/VerifyPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminPage from "./pages/AdminPage";
+import ContactPage from "./pages/ContactPage";
 
 export default function App() {
   return (
@@ -25,6 +26,16 @@ export default function App() {
             <ProtectedRoute>
               <Layout>
                 <DashboardPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/contact"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ContactPage />
               </Layout>
             </ProtectedRoute>
           }

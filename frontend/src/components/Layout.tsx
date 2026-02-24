@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
   ArrowRightStartOnRectangleIcon,
+  ChatBubbleLeftEllipsisIcon,
   GlobeAltIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
@@ -33,6 +34,13 @@ export default function Layout({ children }: { children: ReactNode }) {
                   Admin
                 </Link>
               )}
+              <Link
+                to="/contact"
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                <ChatBubbleLeftEllipsisIcon className="w-4 h-4" />
+                Contact
+              </Link>
               <span className="text-sm text-gray-400">{user?.email}</span>
               <button
                 onClick={logout}
