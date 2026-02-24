@@ -4,8 +4,9 @@ import time
 from app.config import settings
 
 # With PersistentKeepalive=10s, rx should increase every ~10s.
-# If no rx change for 20s, client is disconnected.
-RX_STALE_TIMEOUT = 20
+# 35s allows up to 3 missed keepalives before declaring disconnected,
+# avoiding false negatives from network jitter.
+RX_STALE_TIMEOUT = 35
 
 
 class WireGuardService:
