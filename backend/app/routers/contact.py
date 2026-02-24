@@ -51,6 +51,6 @@ async def contact(
             detail="Service de contact indisponible",
         ) from exc
 
-    await log_activity(db, user.email, "contact_send", detail=subject)
+    await log_activity(user.email, "contact_send", detail=subject)
 
     return None

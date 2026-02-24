@@ -83,16 +83,19 @@ async def update_user(
                     wireguard_service.remove_peer(tunnel.client_public_key)
             except Exception:
                 pass
-        action = "admin_unban" if data.is_active else "admin_ban"
-        await log_activity(db, admin.email, action, detail=user.email)
-
     if data.max_tunnels is not None:
         old_max = user.max_tunnels
         user.max_tunnels = data.max_tunnels
-        await log_activity(db, admin.email, "admin_update_quota", detail=f"{user.email}: {old_max} → {data.max_tunnels}")
 
     await db.commit()
     await db.refresh(user)
+
+    # Log activity after commit (separate session, never blocks)
+    if data.is_active is not None:
+        action = "admin_unban" if data.is_active else "admin_ban"
+        await log_activity(admin.email, action, detail=user.email)
+    if data.max_tunnels is not None:
+        await log_activity(admin.email, "admin_update_quota", detail=f"{user.email}: {old_max} → {data.max_tunnels}")
 
     count_result = await db.execute(
         select(func.count()).select_from(Tunnel).where(Tunnel.user_id == user.id)
@@ -144,7 +147,7 @@ async def delete_user(
     # Regenerate HAProxy config
     await haproxy_service.regenerate_config(db)
 
-    await log_activity(db, admin.email, "admin_delete_user", detail=user_email)
+    await log_activity(admin.email, "admin_delete_user", detail=user_email)
 
 
 # ---- Tunnels ----
@@ -222,7 +225,7 @@ async def admin_update_tunnel(
 
     if "is_active" in data:
         state = "actif" if tunnel.is_active else "inactif"
-        await log_activity(db, _admin.email, "admin_toggle_tunnel", detail=f"{tunnel.subdomain} → {state}")
+        await log_activity(_admin.email, "admin_toggle_tunnel", detail=f"{tunnel.subdomain} → {state}")
 
     return AdminTunnelResponse(
         id=tunnel.id,

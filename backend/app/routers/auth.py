@@ -76,7 +76,7 @@ async def register(request: Request, data: UserRegister, db: AsyncSession = Depe
     except Exception:
         pass
 
-    await log_activity(db, data.email, "register")
+    await log_activity(data.email, "register")
 
     return user
 
@@ -176,7 +176,7 @@ async def login(request: Request, data: UserLogin, db: AsyncSession = Depends(ge
             status_code=status.HTTP_403_FORBIDDEN,
             detail="not_verified",
         )
-    await log_activity(db, user.email, "login")
+    await log_activity(user.email, "login")
 
     token = create_access_token(user.id)
     return TokenResponse(access_token=token)

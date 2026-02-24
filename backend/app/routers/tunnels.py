@@ -156,7 +156,7 @@ async def create_tunnel(
     # Request SSL certificate for the subdomain (non-blocking failure)
     certbot_service.request_cert(subdomain)
 
-    await log_activity(db, user.email, "tunnel_create", detail=subdomain)
+    await log_activity(user.email, "tunnel_create", detail=subdomain)
 
     return _to_response(tunnel)
 
@@ -199,7 +199,7 @@ async def update_tunnel(
 
     if data.is_active is not None:
         state = "actif" if tunnel.is_active else "inactif"
-        await log_activity(db, user.email, "tunnel_toggle", detail=f"{tunnel.subdomain} → {state}")
+        await log_activity(user.email, "tunnel_toggle", detail=f"{tunnel.subdomain} → {state}")
 
     return _to_response(tunnel)
 
@@ -225,7 +225,7 @@ async def delete_tunnel(
     # Regenerate HAProxy config
     await haproxy_service.regenerate_config(db)
 
-    await log_activity(db, user.email, "tunnel_delete", detail=subdomain)
+    await log_activity(user.email, "tunnel_delete", detail=subdomain)
 
 
 @router.get("/{tunnel_id}/config")
