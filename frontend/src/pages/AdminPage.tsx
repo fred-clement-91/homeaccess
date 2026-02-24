@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import {
   ShieldExclamationIcon,
@@ -6,7 +6,9 @@ import {
   LinkIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  UsersIcon,
   ClockIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import api from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
@@ -19,6 +21,8 @@ interface ActivityEntry {
   detail: string | null;
   created_at: string;
 }
+
+type Tab = "users" | "activity";
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   register: { label: "Inscription", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
@@ -44,6 +48,9 @@ function formatDuration(seconds: number): string {
 
 export default function AdminPage() {
   const { user } = useAuth();
+  const [tab, setTab] = useState<Tab>("users");
+
+  // Users + tunnels state
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [tunnels, setTunnels] = useState<AdminTunnel[]>([]);
   const [peerStatus, setPeerStatus] = useState<
@@ -56,11 +63,14 @@ export default function AdminPage() {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   // Activity log state
-  const [showActivity, setShowActivity] = useState(false);
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityOffset, setActivityOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [search, setSearch] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activityLoaded = useRef(false);
 
   const ACTIVITY_LIMIT = 30;
 
@@ -92,12 +102,15 @@ export default function AdminPage() {
   }, []);
 
   const fetchActivity = useCallback(
-    async (offset = 0, append = false) => {
+    async (offset = 0, append = false, searchQuery = "") => {
       setActivityLoading(true);
       try {
-        const { data } = await api.get(
-          `/admin/activity?limit=${ACTIVITY_LIMIT}&offset=${offset}`
-        );
+        const params = new URLSearchParams({
+          limit: String(ACTIVITY_LIMIT),
+          offset: String(offset),
+        });
+        if (searchQuery) params.set("search", searchQuery);
+        const { data } = await api.get(`/admin/activity?${params}`);
         if (append) {
           setActivity((prev) => [...prev, ...data]);
         } else {
@@ -133,6 +146,25 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Load activity when switching to that tab for the first time
+  useEffect(() => {
+    if (tab === "activity" && !activityLoaded.current) {
+      activityLoaded.current = true;
+      fetchActivity(0, false, "");
+    }
+  }, [tab, fetchActivity]);
+
+  // Debounced search
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setActiveSearch(value);
+      setActivityOffset(0);
+      fetchActivity(0, false, value);
+    }, 400);
+  };
+
   // All hooks above — safe to return early below
 
   if (!user?.is_admin) {
@@ -154,13 +186,6 @@ export default function AdminPage() {
       else next.add(userId);
       return next;
     });
-  };
-
-  const toggleActivity = () => {
-    if (!showActivity && activity.length === 0) {
-      fetchActivity(0);
-    }
-    setShowActivity((prev) => !prev);
   };
 
   const tunnelsByUser: Record<string, AdminTunnel[]> = {};
@@ -208,9 +233,15 @@ export default function AdminPage() {
       minute: "2-digit",
     });
 
+  const tabs: { id: Tab; label: string; icon: typeof UsersIcon }[] = [
+    { id: "users", label: "Utilisateurs", icon: UsersIcon },
+    { id: "activity", label: "Journal", icon: ClockIcon },
+  ];
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-white">Administration</h1>
         <div className="flex items-center gap-4 text-sm text-gray-400">
           <span>
@@ -223,262 +254,297 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="space-y-3">
-        {users.length === 0 ? (
-          <p className="text-center text-gray-500 py-12">Aucun utilisateur</p>
-        ) : (
-          users.map((u) => {
-            const userTunnels = tunnelsByUser[u.id] || [];
-            const expanded = expandedUsers.has(u.id);
-            const connected = connectedCount(u.id);
-
-            return (
-              <div
-                key={u.id}
-                className="bg-gray-900/50 border border-gray-800/50 rounded-xl overflow-hidden"
-              >
-                {/* ---- User row ---- */}
-                <div
-                  className={`flex items-center justify-between gap-4 px-5 py-4 transition-colors ${
-                    userTunnels.length > 0
-                      ? "cursor-pointer hover:bg-gray-800/30"
-                      : ""
-                  }`}
-                  onClick={() => userTunnels.length > 0 && toggleExpand(u.id)}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {userTunnels.length > 0 ? (
-                      expanded ? (
-                        <ChevronDownIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                      ) : (
-                        <ChevronRightIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                      )
-                    ) : (
-                      <div className="w-4 shrink-0" />
-                    )}
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-3">
-                        <p className="text-white font-medium truncate">
-                          {u.email}
-                        </p>
-                        {u.is_admin && (
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                            Admin
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                        <span>
-                          {u.tunnel_count} tunnel
-                          {u.tunnel_count !== 1 ? "s" : ""}
-                        </span>
-                        {connected > 0 && (
-                          <>
-                            <span>·</span>
-                            <span className="text-green-400">
-                              {connected} connecté
-                              {connected !== 1 ? "s" : ""}
-                            </span>
-                          </>
-                        )}
-                        <span>·</span>
-                        <span>Inscrit le {formatDate(u.created_at)}</span>
-                        <span>·</span>
-                        {u.is_verified ? (
-                          <span className="text-emerald-500">Vérifié</span>
-                        ) : (
-                          <span className="text-gray-600">Non vérifié</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    className="flex items-center gap-3"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                        u.is_active
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : "bg-red-500/10 text-red-400 border border-red-500/20"
-                      }`}
-                    >
-                      {u.is_active ? "Actif" : "Banni"}
-                    </span>
-
-                    {!u.is_admin && (
-                      <>
-                        {confirmBan === u.id ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-gray-400">
-                              {u.is_active ? "Bannir ?" : "Débannir ?"}
-                            </span>
-                            <button
-                              onClick={() => handleToggleBan(u)}
-                              className={`px-3 py-1.5 rounded-lg text-white text-xs font-medium transition-all cursor-pointer ${
-                                u.is_active
-                                  ? "bg-red-600 hover:bg-red-500"
-                                  : "bg-emerald-600 hover:bg-emerald-500"
-                              }`}
-                            >
-                              Oui
-                            </button>
-                            <button
-                              onClick={() => setConfirmBan(null)}
-                              className="px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 text-xs font-medium hover:bg-gray-700 transition-all cursor-pointer"
-                            >
-                              Non
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setConfirmBan(u.id)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                              u.is_active
-                                ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
-                                : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
-                            }`}
-                          >
-                            <ShieldExclamationIcon className="w-4 h-4" />
-                            {u.is_active ? "Bannir" : "Débannir"}
-                          </button>
-                        )}
-
-                        {confirmDelete === u.id ? (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => handleDeleteUser(u.id)}
-                              className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-medium transition-all cursor-pointer"
-                            >
-                              Oui
-                            </button>
-                            <button
-                              onClick={() => setConfirmDelete(null)}
-                              className="px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 text-xs font-medium hover:bg-gray-700 transition-all cursor-pointer"
-                            >
-                              Non
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setConfirmDelete(u.id)}
-                            className="px-3 py-1.5 rounded-lg bg-gray-800/50 text-gray-400 border border-gray-700/50 hover:text-red-400 hover:border-red-500/50 hover:bg-red-500/10 transition-all cursor-pointer"
-                            title="Supprimer"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* ---- Expanded tunnels ---- */}
-                {expanded && userTunnels.length > 0 && (
-                  <div className="border-t border-gray-800/50 px-5 pb-4">
-                    <div className="space-y-2 pt-3 pl-7">
-                      {userTunnels.map((t) => {
-                        const status = peerStatus[t.id];
-                        const isConnected = status?.connected ?? false;
-                        const since = status?.connected_since ?? 0;
-                        const duration = since > 0 ? now - since : 0;
-
-                        return (
-                          <div
-                            key={t.id}
-                            className="flex items-center justify-between gap-4 bg-gray-800/40 border border-gray-700/40 rounded-lg px-4 py-3"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-3">
-                                <p className="text-white text-sm font-medium">
-                                  {t.subdomain}
-                                  <span className="text-gray-600 font-normal">
-                                    .homeaccess.site
-                                  </span>
-                                </p>
-                                {t.is_active && (
-                                  <div
-                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                      isConnected
-                                        ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                        : "bg-gray-800/50 text-gray-500 border border-gray-700/50"
-                                    }`}
-                                  >
-                                    <LinkIcon className="w-3 h-3" />
-                                    {isConnected
-                                      ? `Connecté · ${formatDuration(duration)}`
-                                      : "Déconnecté"}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                                <span>Port {t.target_port}</span>
-                                <span>·</span>
-                                <span>{t.vpn_ip}</span>
-                                <span>·</span>
-                                <span>{formatDate(t.created_at)}</span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                                  t.is_active
-                                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                    : "bg-gray-800/50 text-gray-500 border border-gray-700/50"
-                                }`}
-                              >
-                                {t.is_active ? "Actif" : "Inactif"}
-                              </span>
-                              <button
-                                onClick={() => handleToggleTunnel(t)}
-                                className={`relative w-10 h-5.5 rounded-full transition-colors cursor-pointer ${
-                                  t.is_active ? "bg-indigo-600" : "bg-gray-700"
-                                }`}
-                              >
-                                <div
-                                  className={`absolute top-0.75 w-4 h-4 rounded-full bg-white transition-transform ${
-                                    t.is_active
-                                      ? "translate-x-5"
-                                      : "translate-x-0.75"
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 bg-gray-900/50 border border-gray-800/50 rounded-xl p-1">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer flex-1 justify-center ${
+              tab === t.id
+                ? "bg-gray-800 text-white shadow-sm"
+                : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+            }`}
+          >
+            <t.icon className="w-4 h-4" />
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* ---- Activity log ---- */}
-      <div className="mt-10">
-        <button
-          onClick={toggleActivity}
-          className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors cursor-pointer"
-        >
-          <ClockIcon className="w-5 h-5" />
-          Journal d'activité
-          {showActivity ? (
-            <ChevronDownIcon className="w-4 h-4" />
+      {/* ======== Users tab ======== */}
+      {tab === "users" && (
+        <div className="space-y-3">
+          {users.length === 0 ? (
+            <p className="text-center text-gray-500 py-12">
+              Aucun utilisateur
+            </p>
           ) : (
-            <ChevronRightIcon className="w-4 h-4" />
-          )}
-        </button>
+            users.map((u) => {
+              const userTunnels = tunnelsByUser[u.id] || [];
+              const expanded = expandedUsers.has(u.id);
+              const connected = connectedCount(u.id);
 
-        {showActivity && (
-          <div className="mt-4 space-y-2">
+              return (
+                <div
+                  key={u.id}
+                  className="bg-gray-900/50 border border-gray-800/50 rounded-xl overflow-hidden"
+                >
+                  {/* User row */}
+                  <div
+                    className={`flex items-center justify-between gap-4 px-5 py-4 transition-colors ${
+                      userTunnels.length > 0
+                        ? "cursor-pointer hover:bg-gray-800/30"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      userTunnels.length > 0 && toggleExpand(u.id)
+                    }
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {userTunnels.length > 0 ? (
+                        expanded ? (
+                          <ChevronDownIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                        ) : (
+                          <ChevronRightIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                        )
+                      ) : (
+                        <div className="w-4 shrink-0" />
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-3">
+                          <p className="text-white font-medium truncate">
+                            {u.email}
+                          </p>
+                          {u.is_admin && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                          <span>
+                            {u.tunnel_count} tunnel
+                            {u.tunnel_count !== 1 ? "s" : ""}
+                          </span>
+                          {connected > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="text-green-400">
+                                {connected} connecté
+                                {connected !== 1 ? "s" : ""}
+                              </span>
+                            </>
+                          )}
+                          <span>·</span>
+                          <span>Inscrit le {formatDate(u.created_at)}</span>
+                          <span>·</span>
+                          {u.is_verified ? (
+                            <span className="text-emerald-500">Vérifié</span>
+                          ) : (
+                            <span className="text-gray-600">Non vérifié</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      className="flex items-center gap-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                          u.is_active
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-red-500/10 text-red-400 border border-red-500/20"
+                        }`}
+                      >
+                        {u.is_active ? "Actif" : "Banni"}
+                      </span>
+
+                      {!u.is_admin && (
+                        <>
+                          {confirmBan === u.id ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-gray-400">
+                                {u.is_active ? "Bannir ?" : "Débannir ?"}
+                              </span>
+                              <button
+                                onClick={() => handleToggleBan(u)}
+                                className={`px-3 py-1.5 rounded-lg text-white text-xs font-medium transition-all cursor-pointer ${
+                                  u.is_active
+                                    ? "bg-red-600 hover:bg-red-500"
+                                    : "bg-emerald-600 hover:bg-emerald-500"
+                                }`}
+                              >
+                                Oui
+                              </button>
+                              <button
+                                onClick={() => setConfirmBan(null)}
+                                className="px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 text-xs font-medium hover:bg-gray-700 transition-all cursor-pointer"
+                              >
+                                Non
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmBan(u.id)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                                u.is_active
+                                  ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                                  : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+                              }`}
+                            >
+                              <ShieldExclamationIcon className="w-4 h-4" />
+                              {u.is_active ? "Bannir" : "Débannir"}
+                            </button>
+                          )}
+
+                          {confirmDelete === u.id ? (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleDeleteUser(u.id)}
+                                className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-medium transition-all cursor-pointer"
+                              >
+                                Oui
+                              </button>
+                              <button
+                                onClick={() => setConfirmDelete(null)}
+                                className="px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 text-xs font-medium hover:bg-gray-700 transition-all cursor-pointer"
+                              >
+                                Non
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDelete(u.id)}
+                              className="px-3 py-1.5 rounded-lg bg-gray-800/50 text-gray-400 border border-gray-700/50 hover:text-red-400 hover:border-red-500/50 hover:bg-red-500/10 transition-all cursor-pointer"
+                              title="Supprimer"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded tunnels */}
+                  {expanded && userTunnels.length > 0 && (
+                    <div className="border-t border-gray-800/50 px-5 pb-4">
+                      <div className="space-y-2 pt-3 pl-7">
+                        {userTunnels.map((t) => {
+                          const status = peerStatus[t.id];
+                          const isConnected = status?.connected ?? false;
+                          const since = status?.connected_since ?? 0;
+                          const duration = since > 0 ? now - since : 0;
+
+                          return (
+                            <div
+                              key={t.id}
+                              className="flex items-center justify-between gap-4 bg-gray-800/40 border border-gray-700/40 rounded-lg px-4 py-3"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-3">
+                                  <p className="text-white text-sm font-medium">
+                                    {t.subdomain}
+                                    <span className="text-gray-600 font-normal">
+                                      .homeaccess.site
+                                    </span>
+                                  </p>
+                                  {t.is_active && (
+                                    <div
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                        isConnected
+                                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                                          : "bg-gray-800/50 text-gray-500 border border-gray-700/50"
+                                      }`}
+                                    >
+                                      <LinkIcon className="w-3 h-3" />
+                                      {isConnected
+                                        ? `Connecté · ${formatDuration(duration)}`
+                                        : "Déconnecté"}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                                  <span>Port {t.target_port}</span>
+                                  <span>·</span>
+                                  <span>{t.vpn_ip}</span>
+                                  <span>·</span>
+                                  <span>{formatDate(t.created_at)}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                                    t.is_active
+                                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                      : "bg-gray-800/50 text-gray-500 border border-gray-700/50"
+                                  }`}
+                                >
+                                  {t.is_active ? "Actif" : "Inactif"}
+                                </span>
+                                <button
+                                  onClick={() => handleToggleTunnel(t)}
+                                  className={`relative w-10 h-5.5 rounded-full transition-colors cursor-pointer ${
+                                    t.is_active ? "bg-indigo-600" : "bg-gray-700"
+                                  }`}
+                                >
+                                  <div
+                                    className={`absolute top-0.75 w-4 h-4 rounded-full bg-white transition-transform ${
+                                      t.is_active
+                                        ? "translate-x-5"
+                                        : "translate-x-0.75"
+                                    }`}
+                                  />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* ======== Activity tab ======== */}
+      {tab === "activity" && (
+        <div>
+          {/* Search bar */}
+          <div className="relative mb-4">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Rechercher par email, action, détail..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-900/50 border border-gray-800/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+            />
+            {search && (
+              <button
+                onClick={() => handleSearchChange("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-xs cursor-pointer"
+              >
+                Effacer
+              </button>
+            )}
+          </div>
+
+          {/* Activity list */}
+          <div className="space-y-2">
             {activity.length === 0 && !activityLoading ? (
-              <p className="text-center text-gray-500 py-8">
-                Aucune activité enregistrée
+              <p className="text-center text-gray-500 py-12">
+                {activeSearch
+                  ? "Aucun résultat pour cette recherche"
+                  : "Aucune activité enregistrée"}
               </p>
             ) : (
               <>
@@ -516,7 +582,9 @@ export default function AdminPage() {
                 {hasMore && (
                   <div className="text-center pt-2">
                     <button
-                      onClick={() => fetchActivity(activityOffset, true)}
+                      onClick={() =>
+                        fetchActivity(activityOffset, true, activeSearch)
+                      }
                       disabled={activityLoading}
                       className="px-4 py-2 text-sm text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-800 border border-gray-700/50 rounded-lg transition-all cursor-pointer disabled:opacity-50"
                     >
@@ -533,8 +601,8 @@ export default function AdminPage() {
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

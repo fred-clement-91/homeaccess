@@ -247,16 +247,21 @@ async def admin_update_tunnel(
 async def list_activity(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    search: str = Query(default="", max_length=200),
     _admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return recent activity log entries (newest first)."""
-    result = await db.execute(
-        select(ActivityLog)
-        .order_by(ActivityLog.created_at.desc())
-        .offset(offset)
-        .limit(limit)
-    )
+    """Return recent activity log entries (newest first), optionally filtered."""
+    query = select(ActivityLog)
+    if search:
+        pattern = f"%{search}%"
+        query = query.where(
+            ActivityLog.user_email.ilike(pattern)
+            | ActivityLog.action.ilike(pattern)
+            | ActivityLog.detail.ilike(pattern)
+        )
+    query = query.order_by(ActivityLog.created_at.desc()).offset(offset).limit(limit)
+    result = await db.execute(query)
     logs = result.scalars().all()
     return [
         {
