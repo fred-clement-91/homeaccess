@@ -1,0 +1,21 @@
+[Unit]
+Description=HomeVPN API
+After=network.target postgresql.service wg-quick@wg1.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=homevpn
+Group=homevpn
+WorkingDirectory=/opt/homevpn/backend
+EnvironmentFile=/opt/homevpn/.env
+ExecStart=/opt/homevpn/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+# Allow wg commands
+AmbientCapabilities=CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_ADMIN
+
+[Install]
+WantedBy=multi-user.target

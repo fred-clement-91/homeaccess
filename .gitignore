@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+node_modules/
+dist/
+.vite/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+wireguard/config/
+haproxy/certs/*.pem
+pgdata/
+.DS_Store
