@@ -14,7 +14,7 @@ from app.models.user import User
 from app.schemas.tunnel import SubdomainCheck, TunnelCreate, TunnelResponse, TunnelUpdate
 from app.services.crypto import decrypt_key, encrypt_key
 from app.services.certbot import certbot_service
-from app.services.haproxy import haproxy_service
+from app.services.haproxy import request_haproxy_reload
 from app.services.ip_allocator import ip_allocator
 from app.services.email import send_tunnel_created_email
 from app.services.wireguard import wireguard_service
@@ -159,7 +159,7 @@ async def create_tunnel(
         )
 
     # Regenerate HAProxy config
-    await haproxy_service.regenerate_config(db)
+    await request_haproxy_reload()
 
     # Request SSL certificate for the subdomain (non-blocking failure)
     certbot_service.request_cert(subdomain)
@@ -226,7 +226,7 @@ async def update_tunnel(
     await db.commit()
     await db.refresh(tunnel)
 
-    await haproxy_service.regenerate_config(db)
+    await request_haproxy_reload()
 
     if data.is_active is not None:
         state = "actif" if tunnel.is_active else "inactif"
@@ -254,7 +254,7 @@ async def delete_tunnel(
     await db.commit()
 
     # Regenerate HAProxy config
-    await haproxy_service.regenerate_config(db)
+    await request_haproxy_reload()
 
     await log_activity(user.email, "tunnel_delete", detail=subdomain)
 

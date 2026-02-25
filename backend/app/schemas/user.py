@@ -77,5 +77,6 @@ class AdminTunnelResponse(BaseModel):
 
 class AdminUserUpdate(BaseModel):
     is_active: bool | None = None
+    is_admin: bool | None = None
     is_beta_tester: bool | None = None
     max_tunnels: int | None = None

@@ -13,7 +13,7 @@ from app.models.tunnel import Tunnel
 from app.models.user import User
 from app.schemas.user import AdminTunnelResponse, AdminUserResponse, AdminUserUpdate
 from app.services.activity import log_activity
-from app.services.haproxy import haproxy_service
+from app.services.haproxy import request_haproxy_reload
 from app.services.wireguard import wireguard_service
 
 router = APIRouter()
@@ -84,6 +84,13 @@ async def update_user(
                     wireguard_service.remove_peer(tunnel.client_public_key)
             except Exception:
                 pass
+    if data.is_admin is not None:
+        if user.email == "contact@fredclement.fr":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot modify super-admin privileges",
+            )
+        user.is_admin = data.is_admin
     if data.is_beta_tester is not None:
         user.is_beta_tester = data.is_beta_tester
     if data.max_tunnels is not None:
@@ -96,6 +103,9 @@ async def update_user(
     # Log activity after commit (separate session, never blocks)
     if data.is_active is not None:
         action = "admin_unban" if data.is_active else "admin_ban"
+        await log_activity(admin.email, action, detail=user.email)
+    if data.is_admin is not None:
+        action = "admin_promote" if data.is_admin else "admin_demote"
         await log_activity(admin.email, action, detail=user.email)
     if data.max_tunnels is not None:
         await log_activity(admin.email, "admin_update_quota", detail=f"{user.email}: {old_max} → {data.max_tunnels}")
@@ -149,7 +159,7 @@ async def delete_user(
     await db.commit()
 
     # Regenerate HAProxy config
-    await haproxy_service.regenerate_config(db)
+    await request_haproxy_reload()
 
     await log_activity(admin.email, "admin_delete_user", detail=user_email)
 
@@ -228,7 +238,7 @@ async def admin_update_tunnel(
     await db.commit()
     await db.refresh(tunnel)
 
-    await haproxy_service.regenerate_config(db)
+    await request_haproxy_reload()
 
     if "is_active" in data:
         state = "actif" if tunnel.is_active else "inactif"

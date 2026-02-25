@@ -7,7 +7,7 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.database import Base
-from app.models import User, Tunnel  # noqa: F401 - ensure models are registered
+from app.models import User, Tunnel, SystemFlag  # noqa: F401 - ensure models are registered
 
 config = context.config
 

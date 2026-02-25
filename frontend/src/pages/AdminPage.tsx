@@ -38,6 +38,8 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   admin_delete_user: { label: "Suppression compte", color: "bg-red-500/10 text-red-400 border-red-500/20" },
   admin_toggle_tunnel: { label: "Toggle tunnel (admin)", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   admin_update_quota: { label: "Quota modifié", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+  admin_promote: { label: "Promotion admin", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  admin_demote: { label: "Révocation admin", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
 };
 
 function formatDuration(seconds: number): string {
@@ -391,6 +393,22 @@ export default function AdminPage() {
                       >
                         {u.is_active ? "Actif" : "Banni"}
                       </span>
+
+                      {/* Admin toggle — visible for all except super-admin and self */}
+                      {u.email !== "contact@fredclement.fr" && u.id !== user?.id && (
+                        <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800/50 border border-gray-700/50 cursor-pointer hover:bg-gray-800 transition-all">
+                          <input
+                            type="checkbox"
+                            checked={u.is_admin}
+                            onChange={async () => {
+                              await api.patch(`/admin/users/${u.id}`, { is_admin: !u.is_admin });
+                              fetchUsers();
+                            }}
+                            className="accent-amber-500 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-400">Admin</span>
+                        </label>
+                      )}
 
                       {!u.is_admin && (
                         <>

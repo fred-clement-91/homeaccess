@@ -161,17 +161,6 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
         <span className="text-gray-500">Cible :</span>
         <div className="flex rounded-lg overflow-hidden border border-gray-700/50">
           <button
-            onClick={() => { if (!tunnel.use_device_ip) onToggle(tunnel.id, { use_device_ip: true }); }}
-            className={`px-2.5 py-1 font-medium transition-all cursor-pointer ${
-              tunnel.use_device_ip
-                ? "bg-blue-500/20 text-blue-400"
-                : "bg-gray-800/50 text-gray-500 hover:text-gray-300"
-            }`}
-            title="Trafic vers l'équipement derrière le routeur WireGuard"
-          >
-            Équipement
-          </button>
-          <button
             onClick={() => { if (tunnel.use_device_ip) onToggle(tunnel.id, { use_device_ip: false }); }}
             className={`px-2.5 py-1 font-medium transition-all cursor-pointer ${
               !tunnel.use_device_ip
@@ -181,6 +170,17 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
             title="Trafic directement vers le pair VPN"
           >
             VPN direct
+          </button>
+          <button
+            onClick={() => { if (!tunnel.use_device_ip) onToggle(tunnel.id, { use_device_ip: true }); }}
+            className={`px-2.5 py-1 font-medium transition-all cursor-pointer ${
+              tunnel.use_device_ip
+                ? "bg-blue-500/20 text-blue-400"
+                : "bg-gray-800/50 text-gray-500 hover:text-gray-300"
+            }`}
+            title="Trafic vers l'équipement derrière le routeur WireGuard"
+          >
+            Équipement
           </button>
         </div>
       </div>
