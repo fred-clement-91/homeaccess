@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import INET, UUID
@@ -32,6 +33,7 @@ class Tunnel(Base):
     )
     subdomain: Mapped[str] = mapped_column(String(63), unique=True, nullable=False)
     target_port: Mapped[int] = mapped_column(Integer, nullable=False, default=8123)
+    service_type: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     vpn_ip: Mapped[str] = mapped_column(INET, unique=True, nullable=False)
     device_ip: Mapped[str] = mapped_column(INET, unique=True, nullable=False)
     client_private_key: Mapped[str] = mapped_column(Text, nullable=False)

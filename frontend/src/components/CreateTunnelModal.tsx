@@ -14,12 +14,12 @@ interface Props {
 }
 
 const PORT_PRESETS = [
-  { label: "Home Assistant", port: 8123 },
-  { label: "Jellyfin", port: 8096 },
-  { label: "Nextcloud", port: 443 },
-  { label: "Plex", port: 32400 },
-  { label: "HTTP", port: 80 },
-  { label: "Perso.", port: 0 },
+  { label: "Home Assistant", port: 8123, service: "homeassistant" },
+  { label: "Jellyfin", port: 8096, service: "jellyfin" },
+  { label: "Nextcloud", port: 443, service: "nextcloud" },
+  { label: "Plex", port: 32400, service: "plex" },
+  { label: "HTTP", port: 80, service: "http" },
+  { label: "Perso.", port: 0, service: "custom" },
 ];
 
 export default function CreateTunnelModal({ open, onClose, onCreated }: Props) {
@@ -83,6 +83,7 @@ export default function CreateTunnelModal({ open, onClose, onCreated }: Props) {
       await api.post("/tunnels/", {
         subdomain: subdomain.toLowerCase(),
         target_port: effectivePort,
+        service_type: PORT_PRESETS[selectedPreset].service,
       });
       setSubdomain("");
       setTargetPort(8123);

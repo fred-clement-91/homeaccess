@@ -331,9 +331,31 @@ export default function AdminPage() {
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                           <span>
-                            {u.tunnel_count} tunnel
+                            {u.tunnel_count}/{u.max_tunnels} tunnel
                             {u.tunnel_count !== 1 ? "s" : ""}
                           </span>
+                          {!u.is_admin && (
+                            <>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                Max
+                                <select
+                                  value={u.max_tunnels}
+                                  onChange={async (e) => {
+                                    e.stopPropagation();
+                                    await api.patch(`/admin/users/${u.id}`, { max_tunnels: Number(e.target.value) });
+                                    fetchUsers();
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="bg-gray-800 border border-gray-700 rounded px-1 py-0 text-xs text-gray-300 cursor-pointer hover:border-gray-500 transition-colors"
+                                >
+                                  {[1, 2, 3, 4, 5, 6, 8, 10, 15, 20].map((n) => (
+                                    <option key={n} value={n}>{n}</option>
+                                  ))}
+                                </select>
+                              </span>
+                            </>
+                          )}
                           {connected > 0 && (
                             <>
                               <span>·</span>

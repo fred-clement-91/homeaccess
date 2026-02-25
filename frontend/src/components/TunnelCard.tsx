@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   ArrowDownTrayIcon,
   TrashIcon,
-  GlobeAltIcon,
   ServerIcon,
   LinkIcon,
   QrCodeIcon,
@@ -10,6 +9,7 @@ import {
 import api from "../api/client";
 import type { Tunnel } from "../types";
 import QRCodeModal from "./QRCodeModal";
+import ServiceLogo from "./ServiceLogo";
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -115,9 +115,7 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
 
       {/* Domain */}
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
-          <GlobeAltIcon className="w-5 h-5 text-indigo-400" />
-        </div>
+        <ServiceLogo serviceType={tunnel.service_type} />
         <div className="min-w-0 flex-1">
           <a
             href={`https://${tunnel.full_domain}`}

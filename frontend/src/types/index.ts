@@ -11,6 +11,7 @@ export interface Tunnel {
   id: string;
   subdomain: string;
   target_port: number;
+  service_type: string | null;
   vpn_ip: string;
   device_ip: string;
   is_active: boolean;
