@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import TunnelCard from "../components/TunnelCard";
 import CreateTunnelModal from "../components/CreateTunnelModal";
 import type { Tunnel } from "../types";
+import SupportBanner from "../components/SupportBanner";
 
 export default function DashboardPage() {
   const { user, refreshUser } = useAuth();
@@ -55,8 +56,8 @@ export default function DashboardPage() {
     refreshUser();
   };
 
-  const handleToggle = async (id: string, isActive: boolean) => {
-    await api.patch(`/tunnels/${id}`, { is_active: isActive });
+  const handleToggle = async (id: string, data: Record<string, unknown>) => {
+    await api.patch(`/tunnels/${id}`, data);
     fetchTunnels();
     fetchStatus();
   };
@@ -67,7 +68,14 @@ export default function DashboardPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">Mes tunnels</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-white">Mes tunnels</h1>
+            {user?.is_beta_tester && (
+              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                Compte gratuit bêta-testeur
+              </span>
+            )}
+          </div>
           <p className="text-gray-400 mt-1">
             {user?.tunnel_count ?? 0} / {user?.max_tunnels ?? 0} tunnels
             utilisés
@@ -120,6 +128,8 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+
+      <SupportBanner />
 
       <CreateTunnelModal
         open={showCreate}

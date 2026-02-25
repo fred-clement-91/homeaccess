@@ -10,19 +10,24 @@ class TunnelCreate(BaseModel):
         ..., min_length=1, max_length=63, pattern=r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$"
     )
     target_port: int = Field(default=8123, ge=1, le=65535)
+    service_type: Optional[str] = None
+    use_device_ip: bool = True
 
 
 class TunnelUpdate(BaseModel):
     target_port: Optional[int] = Field(None, ge=1, le=65535)
     is_active: Optional[bool] = None
+    use_device_ip: Optional[bool] = None
 
 
 class TunnelResponse(BaseModel):
     id: UUID
     subdomain: str
     target_port: int
+    service_type: Optional[str] = None
     vpn_ip: str
     device_ip: str
+    use_device_ip: bool
     is_active: bool
     full_domain: str
     created_at: datetime

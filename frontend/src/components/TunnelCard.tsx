@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import {
   ArrowDownTrayIcon,
   TrashIcon,
-  GlobeAltIcon,
   ServerIcon,
   LinkIcon,
+  QrCodeIcon,
 } from "@heroicons/react/24/outline";
 import api from "../api/client";
 import type { Tunnel } from "../types";
+import QRCodeModal from "./QRCodeModal";
+import ServiceLogo from "./ServiceLogo";
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -22,12 +24,14 @@ interface Props {
   connected: boolean;
   connectedSince: number;
   onDelete: () => void;
-  onToggle: (id: string, isActive: boolean) => void;
+  onToggle: (id: string, data: Record<string, unknown>) => void;
 }
 
 export default function TunnelCard({ tunnel, connected, connectedSince, onDelete, onToggle }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [configText, setConfigText] = useState("");
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   // Update "now" every second when connected to keep duration live
@@ -65,6 +69,16 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
     window.URL.revokeObjectURL(url);
   };
 
+  const handleShowQR = async () => {
+    try {
+      const { data } = await api.get(`/tunnels/${tunnel.id}/config`);
+      setConfigText(data);
+      setShowQR(true);
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="relative group bg-gray-900/50 border border-gray-800/50 rounded-2xl p-5 hover:border-gray-700/50 transition-all duration-200">
       {/* Status indicator */}
@@ -86,7 +100,7 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
           </span>
         </div>
         <button
-          onClick={() => onToggle(tunnel.id, !tunnel.is_active)}
+          onClick={() => onToggle(tunnel.id, { is_active: !tunnel.is_active })}
           className={`relative w-10 h-5.5 rounded-full transition-colors cursor-pointer ${
             tunnel.is_active ? "bg-indigo-600" : "bg-gray-700"
           }`}
@@ -101,9 +115,7 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
 
       {/* Domain */}
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
-          <GlobeAltIcon className="w-5 h-5 text-indigo-400" />
-        </div>
+        <ServiceLogo serviceType={tunnel.service_type} />
         <div className="min-w-0 flex-1">
           <a
             href={`https://${tunnel.full_domain}`}
@@ -135,13 +147,42 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
       </div>
 
       {/* Details */}
-      <div className="flex items-center gap-2 text-xs text-gray-400 mb-5">
+      <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
         <ServerIcon className="w-3.5 h-3.5" />
         <span>Port {tunnel.target_port}</span>
         <span className="text-gray-700">|</span>
         <span>VPN {tunnel.vpn_ip}</span>
         <span className="text-gray-700">|</span>
         <span>Device {tunnel.device_ip}</span>
+      </div>
+
+      {/* Target IP toggle */}
+      <div className="flex items-center gap-2 text-xs mb-5">
+        <span className="text-gray-500">Cible :</span>
+        <div className="flex rounded-lg overflow-hidden border border-gray-700/50">
+          <button
+            onClick={() => { if (tunnel.use_device_ip) onToggle(tunnel.id, { use_device_ip: false }); }}
+            className={`px-2.5 py-1 font-medium transition-all cursor-pointer ${
+              !tunnel.use_device_ip
+                ? "bg-purple-500/20 text-purple-400"
+                : "bg-gray-800/50 text-gray-500 hover:text-gray-300"
+            }`}
+            title="Trafic directement vers le pair VPN"
+          >
+            VPN direct
+          </button>
+          <button
+            onClick={() => { if (!tunnel.use_device_ip) onToggle(tunnel.id, { use_device_ip: true }); }}
+            className={`px-2.5 py-1 font-medium transition-all cursor-pointer ${
+              tunnel.use_device_ip
+                ? "bg-blue-500/20 text-blue-400"
+                : "bg-gray-800/50 text-gray-500 hover:text-gray-300"
+            }`}
+            title="Trafic vers l'équipement derrière le routeur WireGuard"
+          >
+            Équipement
+          </button>
+        </div>
       </div>
 
       {/* Actions */}
@@ -152,6 +193,13 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
         >
           <ArrowDownTrayIcon className="w-4 h-4" />
           Config WG
+        </button>
+        <button
+          onClick={handleShowQR}
+          className="px-3 py-2 rounded-xl bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:text-indigo-400 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all cursor-pointer"
+          title="QR Code WireGuard"
+        >
+          <QrCodeIcon className="w-4 h-4" />
         </button>
         {showConfirm ? (
           <div className="flex gap-2">
@@ -178,6 +226,13 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
           </button>
         )}
       </div>
+
+      <QRCodeModal
+        open={showQR}
+        onClose={() => setShowQR(false)}
+        subdomain={tunnel.subdomain}
+        configText={configText}
+      />
     </div>
   );
 }

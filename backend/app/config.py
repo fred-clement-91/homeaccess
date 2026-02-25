@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     certbot_http_port: int = 8402
     certbot_email: str = "admin@homeaccess.site"
 
+    # Stripe
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+
     # Contact
     contact_email: str = ""
 

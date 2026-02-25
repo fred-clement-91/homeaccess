@@ -31,16 +31,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/docs"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <DocsPage />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/docs" element={<DocsPage />} />
         <Route
           path="/contact"
           element={

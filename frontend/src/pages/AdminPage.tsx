@@ -14,6 +14,7 @@ import {
 import api from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import type { AdminUser, AdminTunnel } from "../types";
+import ServiceLogo from "../components/ServiceLogo";
 
 interface ActivityEntry {
   id: string;
@@ -37,6 +38,8 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   admin_delete_user: { label: "Suppression compte", color: "bg-red-500/10 text-red-400 border-red-500/20" },
   admin_toggle_tunnel: { label: "Toggle tunnel (admin)", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   admin_update_quota: { label: "Quota modifié", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+  admin_promote: { label: "Promotion admin", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  admin_demote: { label: "Révocation admin", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
 };
 
 function formatDuration(seconds: number): string {
@@ -323,12 +326,39 @@ export default function AdminPage() {
                               Admin
                             </span>
                           )}
+                          {u.is_beta_tester && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                              Bêta
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                           <span>
-                            {u.tunnel_count} tunnel
+                            {u.tunnel_count}/{u.max_tunnels} tunnel
                             {u.tunnel_count !== 1 ? "s" : ""}
                           </span>
+                          {!u.is_admin && (
+                            <>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                Max
+                                <select
+                                  value={u.max_tunnels}
+                                  onChange={async (e) => {
+                                    e.stopPropagation();
+                                    await api.patch(`/admin/users/${u.id}`, { max_tunnels: Number(e.target.value) });
+                                    fetchUsers();
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="bg-gray-800 border border-gray-700 rounded px-1 py-0 text-xs text-gray-300 cursor-pointer hover:border-gray-500 transition-colors"
+                                >
+                                  {[1, 2, 3, 4, 5, 6, 8, 10, 15, 20].map((n) => (
+                                    <option key={n} value={n}>{n}</option>
+                                  ))}
+                                </select>
+                              </span>
+                            </>
+                          )}
                           {connected > 0 && (
                             <>
                               <span>·</span>
@@ -364,8 +394,37 @@ export default function AdminPage() {
                         {u.is_active ? "Actif" : "Banni"}
                       </span>
 
+                      {/* Admin toggle — visible for all except super-admin and self */}
+                      {u.email !== "contact@fredclement.fr" && u.id !== user?.id && (
+                        <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800/50 border border-gray-700/50 cursor-pointer hover:bg-gray-800 transition-all">
+                          <input
+                            type="checkbox"
+                            checked={u.is_admin}
+                            onChange={async () => {
+                              await api.patch(`/admin/users/${u.id}`, { is_admin: !u.is_admin });
+                              fetchUsers();
+                            }}
+                            className="accent-amber-500 cursor-pointer"
+                          />
+                          <span className="text-xs text-gray-400">Admin</span>
+                        </label>
+                      )}
+
                       {!u.is_admin && (
                         <>
+                          <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800/50 border border-gray-700/50 cursor-pointer hover:bg-gray-800 transition-all">
+                            <input
+                              type="checkbox"
+                              checked={u.is_beta_tester}
+                              onChange={async () => {
+                                await api.patch(`/admin/users/${u.id}`, { is_beta_tester: !u.is_beta_tester });
+                                fetchUsers();
+                              }}
+                              className="accent-purple-500 cursor-pointer"
+                            />
+                            <span className="text-xs text-gray-400">Compte gratuit</span>
+                          </label>
+
                           {confirmBan === u.id ? (
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs text-gray-400">
@@ -446,7 +505,8 @@ export default function AdminPage() {
                               key={t.id}
                               className="flex items-center justify-between gap-4 bg-gray-800/40 border border-gray-700/40 rounded-lg px-4 py-3"
                             >
-                              <div className="min-w-0">
+                              <ServiceLogo serviceType={t.service_type} className="w-8 h-8 rounded-lg" />
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-3">
                                   <a
                                     href={`https://${t.subdomain}.homeaccess.site`}

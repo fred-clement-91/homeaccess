@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import {
   BookOpenIcon,
   ServerIcon,
@@ -87,6 +88,14 @@ const TOC = [
 export default function DocsPage() {
   return (
     <div className="max-w-3xl mx-auto">
+      <Helmet>
+        <title>Guide d'installation — HomeAccess</title>
+        <meta name="description" content="Guide complet pour configurer votre tunnel WireGuard HomeAccess. Schéma réseau, configuration du routeur, accès à vos équipements." />
+        <link rel="canonical" href="https://homeaccess.site/docs" />
+        <meta property="og:title" content="Guide d'installation — HomeAccess" />
+        <meta property="og:description" content="Guide complet pour configurer votre tunnel WireGuard HomeAccess. Schéma réseau, configuration du routeur, accès à vos équipements." />
+        <meta property="og:url" content="https://homeaccess.site/docs" />
+      </Helmet>
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-2">
@@ -220,12 +229,53 @@ export default function DocsPage() {
             </div>
           </div>
 
+          <p className="text-sm text-gray-500 text-center mt-2 mb-1">
+            Mode : <strong className="text-blue-400">Équipement</strong> (IP Device)
+          </p>
+
           <Tip>
             Le routeur intermédiaire n'est nécessaire que si votre équipement
             ne supporte pas WireGuard. Si votre équipement le supporte
             (Raspberry Pi, Home Assistant, NAS Synology…), il porte le tunnel
-            directement — pas besoin de matériel supplémentaire.
+            directement — utilisez le mode <strong className="text-purple-300">VPN direct</strong> :
           </Tip>
+
+          {/* VPN direct diagram */}
+          <div className="flex flex-col items-center gap-0 py-4">
+            {/* Visiteur */}
+            <div className="px-5 py-2.5 rounded-xl bg-gray-800/60 border border-gray-600/40 text-center">
+              <p className="text-sm font-medium text-gray-300">Visiteur (Internet)</p>
+            </div>
+            <div className="w-px h-6 bg-gray-600" />
+            <div className="text-gray-500 text-xs">▼</div>
+
+            {/* Serveur */}
+            <div className="px-5 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-center max-w-sm w-full">
+              <p className="text-sm font-semibold text-indigo-300">Serveur HomeAccess</p>
+              <p className="text-xs text-gray-400 mt-1">Reverse proxy (TLS) → WireGuard</p>
+              <p className="text-xs text-gray-500">votre-nom.homeaccess.site</p>
+            </div>
+            <div className="w-px h-4 bg-gray-600" />
+            <div className="px-3 py-1 rounded-full bg-gray-800/60 border border-gray-700/40">
+              <p className="text-xs text-gray-400">tunnel WireGuard chiffré</p>
+            </div>
+            <div className="w-px h-4 bg-gray-600" />
+            <div className="text-gray-500 text-xs">▼</div>
+
+            {/* Équipement direct */}
+            <div className="px-5 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center max-w-sm w-full">
+              <p className="text-sm font-semibold text-emerald-300">Équipement avec WireGuard</p>
+              <p className="text-xs text-gray-500 mt-0.5">Raspberry Pi / NAS / Home Assistant…</p>
+              <div className="flex justify-center gap-4 mt-1.5 text-xs text-gray-400">
+                <span>wg0 : 172.16.0.x</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">Port : 80, 8080, 8123…</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-500 text-center mt-2">
+            Mode : <strong className="text-purple-400">VPN direct</strong> (IP VPN)
+          </p>
         </Section>
 
         {/* 3. Créer un tunnel */}
@@ -245,6 +295,22 @@ export default function DocsPage() {
               votre équipement (par défaut : 8123). C'est le port sur lequel
               votre équipement écoute (80 pour une caméra, 8080 pour une interface web,
               8123 pour Home Assistant…).
+            </li>
+            <li>
+              Choisissez l'<strong className="text-white">adresse cible</strong> :
+              <ul className="list-disc list-inside mt-2 ml-4 space-y-1 text-gray-400">
+                <li>
+                  <strong className="text-gray-300">Équipement</strong> — le trafic
+                  est envoyé vers l'IP Device (10.100.0.y). À utiliser quand un
+                  routeur WireGuard intermédiaire fait le pont vers votre équipement.
+                </li>
+                <li>
+                  <strong className="text-gray-300">VPN direct</strong> — le trafic
+                  est envoyé vers l'IP VPN (172.16.0.x). À utiliser quand le service
+                  tourne directement sur la machine qui porte le tunnel WireGuard
+                  (Raspberry Pi, NAS Synology, Home Assistant…).
+                </li>
+              </ul>
             </li>
             <li>
               Validez. Le tunnel est créé avec :
@@ -490,11 +556,16 @@ ping 10.100.0.y   # l'IP device de votre équipement`}</Code>
               </h3>
               <p className="text-gray-400">
                 L'<strong className="text-gray-300">IP VPN</strong> (172.16.0.x)
-                est l'adresse du routeur WireGuard dans le tunnel. L'
+                est l'adresse du pair WireGuard dans le tunnel. L'
                 <strong className="text-gray-300">IP Device</strong> (10.100.0.y)
                 est l'adresse à assigner à votre équipement cible (caméra,
-                NAS…). Le trafic arrive sur l'IP Device via le routage à travers
-                le tunnel.
+                NAS…). Le bouton <strong className="text-gray-300">Équipement / VPN direct</strong>{" "}
+                sur chaque carte tunnel permet de choisir vers quelle adresse
+                le trafic est envoyé. Utilisez{" "}
+                <strong className="text-gray-300">Équipement</strong> si un
+                routeur intermédiaire fait le pont, ou{" "}
+                <strong className="text-gray-300">VPN direct</strong> si le
+                service tourne directement sur la machine WireGuard.
               </p>
             </div>
 
@@ -514,10 +585,13 @@ ping 10.100.0.y   # l'IP device de votre équipement`}</Code>
                 équipement.
               </h3>
               <p className="text-gray-400">
-                Vérifiez que : (1) l'IP Device est bien configurée sur
-                l'équipement avec la bonne passerelle, (2) le port cible
-                dans le tunnel correspond au port réel de l'équipement, (3)
-                le routage IP est activé sur le routeur WireGuard (
+                Vérifiez que : (1) le mode cible est correct — <strong className="text-gray-300">Équipement</strong>{" "}
+                si vous utilisez un routeur intermédiaire, <strong className="text-gray-300">VPN direct</strong>{" "}
+                si le service tourne sur la machine WireGuard, (2) l'IP Device
+                est bien configurée sur l'équipement avec la bonne passerelle,
+                (3) le port cible dans le tunnel correspond au port réel de
+                l'équipement, (4) le routage IP est activé sur le routeur
+                WireGuard (
                 <code className="px-1 py-0.5 rounded bg-gray-800 text-indigo-300 text-sm">
                   sysctl net.ipv4.ip_forward
                 </code>{" "}

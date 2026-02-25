@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import api from "../api/client";
 import { GlobeAltIcon } from "@heroicons/react/24/outline";
 
@@ -30,6 +31,14 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
+      <Helmet>
+        <title>Créer un compte — HomeAccess</title>
+        <meta name="description" content="Créez votre compte HomeAccess gratuitement. Accédez à vos équipements domestiques depuis partout avec un tunnel VPN WireGuard sécurisé." />
+        <link rel="canonical" href="https://homeaccess.site/register" />
+        <meta property="og:title" content="Créer un compte — HomeAccess" />
+        <meta property="og:description" content="Créez votre compte HomeAccess gratuitement. Accédez à vos équipements domestiques depuis partout avec un tunnel VPN WireGuard sécurisé." />
+        <meta property="og:url" content="https://homeaccess.site/register" />
+      </Helmet>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-4">

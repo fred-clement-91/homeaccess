@@ -14,8 +14,9 @@ from app.models.user import User
 from app.schemas.tunnel import SubdomainCheck, TunnelCreate, TunnelResponse, TunnelUpdate
 from app.services.crypto import decrypt_key, encrypt_key
 from app.services.certbot import certbot_service
-from app.services.haproxy import haproxy_service
+from app.services.haproxy import request_haproxy_reload
 from app.services.ip_allocator import ip_allocator
+from app.services.email import send_tunnel_created_email
 from app.services.wireguard import wireguard_service
 
 router = APIRouter()
@@ -32,8 +33,10 @@ def _to_response(tunnel: Tunnel) -> TunnelResponse:
         id=tunnel.id,
         subdomain=tunnel.subdomain,
         target_port=tunnel.target_port,
+        service_type=tunnel.service_type,
         vpn_ip=str(tunnel.vpn_ip),
         device_ip=str(tunnel.device_ip),
+        use_device_ip=tunnel.use_device_ip,
         is_active=tunnel.is_active,
         full_domain=f"{tunnel.subdomain}.{settings.domain}",
         created_at=tunnel.created_at,
@@ -132,6 +135,8 @@ async def create_tunnel(
         user_id=user.id,
         subdomain=subdomain,
         target_port=data.target_port,
+        service_type=data.service_type,
+        use_device_ip=data.use_device_ip,
         vpn_ip=vpn_ip,
         device_ip=device_ip,
         client_private_key=encrypt_key(private_key),
@@ -154,12 +159,33 @@ async def create_tunnel(
         )
 
     # Regenerate HAProxy config
-    await haproxy_service.regenerate_config(db)
+    await request_haproxy_reload()
 
     # Request SSL certificate for the subdomain (non-blocking failure)
     certbot_service.request_cert(subdomain)
 
     await log_activity(user.email, "tunnel_create", detail=subdomain)
+
+    # Send welcome email with WireGuard config attached
+    try:
+        private_key = decrypt_key(tunnel.client_private_key)
+        config_text = wireguard_service.generate_client_config(
+            private_key=private_key,
+            vpn_ip=vpn_ip,
+            device_ip=device_ip,
+            server_public_key=tunnel.server_public_key,
+        )
+        send_tunnel_created_email(
+            to_email=user.email,
+            subdomain=subdomain,
+            full_domain=f"{subdomain}.{settings.domain}",
+            vpn_ip=vpn_ip,
+            device_ip=device_ip,
+            target_port=data.target_port,
+            config_text=config_text,
+        )
+    except Exception:
+        pass  # non-blocking: don't fail tunnel creation if email fails
 
     return _to_response(tunnel)
 
@@ -185,6 +211,8 @@ async def update_tunnel(
 
     if data.target_port is not None:
         tunnel.target_port = data.target_port
+    if data.use_device_ip is not None:
+        tunnel.use_device_ip = data.use_device_ip
     if data.is_active is not None:
         tunnel.is_active = data.is_active
         if data.is_active:
@@ -198,7 +226,7 @@ async def update_tunnel(
     await db.commit()
     await db.refresh(tunnel)
 
-    await haproxy_service.regenerate_config(db)
+    await request_haproxy_reload()
 
     if data.is_active is not None:
         state = "actif" if tunnel.is_active else "inactif"
@@ -226,7 +254,7 @@ async def delete_tunnel(
     await db.commit()
 
     # Regenerate HAProxy config
-    await haproxy_service.regenerate_config(db)
+    await request_haproxy_reload()
 
     await log_activity(user.email, "tunnel_delete", detail=subdomain)
 
