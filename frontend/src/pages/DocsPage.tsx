@@ -142,6 +142,23 @@ export default function DocsPage() {
             Un visiteur accédant à votre sous-domaine est routé de façon
             transparente jusqu'à votre équipement local, via le tunnel chiffré.
           </p>
+          <p>
+            Deux configurations sont possibles :
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-gray-400 ml-2">
+            <li>
+              <strong className="text-gray-300">Connexion directe</strong> — votre
+              équipement supporte WireGuard (Raspberry Pi, Home Assistant, NAS
+              Synology…) : il porte le tunnel lui-même, pas besoin de matériel
+              supplémentaire.
+            </li>
+            <li>
+              <strong className="text-gray-300">Via un routeur intermédiaire</strong> —
+              votre équipement ne supporte pas WireGuard (caméra IP, capteurs
+              IoT…) : un petit routeur (Pi, GL.iNet, MikroTik…) fait le pont
+              entre le tunnel et l'équipement.
+            </li>
+          </ul>
         </Section>
 
         {/* 2. Architecture */}
@@ -199,13 +216,15 @@ export default function DocsPage() {
                 <span className="text-gray-600">|</span>
                 <span>GW : 10.100.0.z</span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">Port : 80, 443, 8123…</p>
+              <p className="text-xs text-gray-500 mt-0.5">Port : 80, 8080, 8123…</p>
             </div>
           </div>
 
           <Tip>
-            L'équipement cible n'a pas besoin de client WireGuard. Seul le
-            routeur intermédiaire (Raspberry Pi, GL.iNet…) gère le tunnel.
+            Le routeur intermédiaire n'est nécessaire que si votre équipement
+            ne supporte pas WireGuard. Si votre équipement le supporte
+            (Raspberry Pi, Home Assistant, NAS Synology…), il porte le tunnel
+            directement — pas besoin de matériel supplémentaire.
           </Tip>
         </Section>
 
@@ -224,8 +243,8 @@ export default function DocsPage() {
             <li>
               Indiquez le <strong className="text-white">port cible</strong> de
               votre équipement (par défaut : 8123). C'est le port sur lequel
-              votre équipement écoute (80 pour une caméra, 443 pour du HTTPS
-              local, 8123 pour Home Assistant…).
+              votre équipement écoute (80 pour une caméra, 8080 pour une interface web,
+              8123 pour Home Assistant…).
             </li>
             <li>
               Validez. Le tunnel est créé avec :
@@ -246,6 +265,13 @@ export default function DocsPage() {
 
         {/* 4. Routeur WireGuard */}
         <Section icon={CpuChipIcon} title="Configurer le routeur WireGuard" id="routeur-wg">
+          <Tip>
+            Cette section ne concerne que le cas où votre équipement cible ne
+            supporte pas WireGuard. Si votre équipement le supporte (Raspberry
+            Pi, Home Assistant, NAS Synology…), installez la configuration
+            WireGuard directement dessus et assignez-lui l'IP Device — vous
+            pouvez passer à la section suivante.
+          </Tip>
           <p>
             Vous avez besoin d'un petit appareil faisant office de passerelle
             WireGuard entre le tunnel et votre équipement. Options courantes :
@@ -253,6 +279,7 @@ export default function DocsPage() {
           <ul className="list-disc list-inside space-y-1 text-gray-400 ml-2">
             <li><strong className="text-gray-300">Raspberry Pi</strong> (3/4/5 ou Zero 2W)</li>
             <li><strong className="text-gray-300">GL.iNet</strong> (GL-MT3000, GL-AXT1800…) — WireGuard intégré</li>
+            <li><strong className="text-gray-300">MikroTik</strong> (hAP ax², RB5009…) — WireGuard natif depuis RouterOS 7</li>
             <li>Tout appareil Linux capable de faire tourner WireGuard</li>
           </ul>
 
@@ -500,13 +527,30 @@ ping 10.100.0.y   # l'IP device de votre équipement`}</Code>
 
             <div>
               <h3 className="text-base font-medium text-white mb-1">
-                Puis-je utiliser un GL.iNet au lieu d'un Raspberry Pi ?
+                Mon équipement supporte WireGuard, ai-je besoin d'un routeur
+                intermédiaire ?
               </h3>
               <p className="text-gray-400">
-                Oui. Les routeurs GL.iNet (GL-MT3000, GL-AXT1800…) intègrent un
-                client WireGuard dans leur interface d'administration. Il suffit
-                de coller la configuration téléchargée depuis le Dashboard et
-                de configurer l'IP Device sur le port LAN.
+                Non. Si votre équipement supporte WireGuard nativement
+                (Raspberry Pi, Home Assistant, NAS Synology…), installez la
+                configuration WireGuard directement dessus. Il portera le
+                tunnel et l'IP Device en même temps. Le routeur intermédiaire
+                n'est nécessaire que pour les équipements qui ne supportent
+                pas WireGuard (caméra IP, capteurs IoT…).
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-base font-medium text-white mb-1">
+                Puis-je utiliser un autre routeur qu'un Raspberry Pi ?
+              </h3>
+              <p className="text-gray-400">
+                Oui. Les routeurs <strong className="text-gray-300">GL.iNet</strong> (GL-MT3000,
+                GL-AXT1800…) et <strong className="text-gray-300">MikroTik</strong> (RouterOS 7+)
+                intègrent un client WireGuard natif dans leur interface
+                d'administration. Il suffit de coller la configuration
+                téléchargée depuis le Dashboard et de configurer l'IP Device
+                sur le port LAN.
               </p>
             </div>
 
