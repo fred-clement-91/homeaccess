@@ -78,7 +78,7 @@ async def update_user(
         for tunnel in tunnels_result.scalars().all():
             try:
                 if data.is_active:
-                    wireguard_service.add_peer(tunnel.client_public_key, str(tunnel.vpn_ip))
+                    wireguard_service.add_peer(tunnel.client_public_key, str(tunnel.vpn_ip), str(tunnel.device_ip))
                 else:
                     wireguard_service.remove_peer(tunnel.client_public_key)
             except Exception:
@@ -170,6 +170,7 @@ async def list_all_tunnels(
             subdomain=t.subdomain,
             target_port=t.target_port,
             vpn_ip=str(t.vpn_ip),
+            device_ip=str(t.device_ip),
             is_active=t.is_active,
             full_domain=f"{t.subdomain}.{settings.domain}",
             created_at=t.created_at,
@@ -211,7 +212,7 @@ async def admin_update_tunnel(
     if "is_active" in data:
         tunnel.is_active = data["is_active"]
         if data["is_active"]:
-            wireguard_service.add_peer(tunnel.client_public_key, str(tunnel.vpn_ip))
+            wireguard_service.add_peer(tunnel.client_public_key, str(tunnel.vpn_ip), str(tunnel.device_ip))
         else:
             try:
                 wireguard_service.remove_peer(tunnel.client_public_key)
@@ -234,6 +235,7 @@ async def admin_update_tunnel(
         subdomain=tunnel.subdomain,
         target_port=tunnel.target_port,
         vpn_ip=str(tunnel.vpn_ip),
+        device_ip=str(tunnel.device_ip),
         is_active=tunnel.is_active,
         full_domain=f"{tunnel.subdomain}.{settings.domain}",
         created_at=tunnel.created_at,

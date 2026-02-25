@@ -11,6 +11,8 @@ class IPAllocator:
     def __init__(self):
         self.network = ipaddress.IPv4Network(settings.vpn_subnet)
         self.server_ip = ipaddress.IPv4Address(settings.vpn_server_ip)
+        self.device_network = ipaddress.IPv4Network(settings.device_subnet)
+        self.device_gateway_ip = ipaddress.IPv4Address(settings.device_gateway_ip)
 
     async def allocate_next_ip(self, db: AsyncSession) -> str:
         result = await db.execute(select(Tunnel.vpn_ip))
@@ -23,7 +25,20 @@ class IPAllocator:
             if ip_str not in allocated:
                 return ip_str
 
-        raise RuntimeError("IP address pool exhausted")
+        raise RuntimeError("VPN IP address pool exhausted")
+
+    async def allocate_next_device_ip(self, db: AsyncSession) -> str:
+        result = await db.execute(select(Tunnel.device_ip))
+        allocated = {str(row[0]) for row in result.fetchall() if row[0] is not None}
+
+        for host in self.device_network.hosts():
+            if host == self.device_gateway_ip:
+                continue
+            ip_str = str(host)
+            if ip_str not in allocated:
+                return ip_str
+
+        raise RuntimeError("Device IP address pool exhausted")
 
 
 ip_allocator = IPAllocator()

@@ -33,6 +33,7 @@ class Tunnel(Base):
     subdomain: Mapped[str] = mapped_column(String(63), unique=True, nullable=False)
     target_port: Mapped[int] = mapped_column(Integer, nullable=False, default=8123)
     vpn_ip: Mapped[str] = mapped_column(INET, unique=True, nullable=False)
+    device_ip: Mapped[str] = mapped_column(INET, unique=True, nullable=False)
     client_private_key: Mapped[str] = mapped_column(Text, nullable=False)
     client_public_key: Mapped[str] = mapped_column(Text, nullable=False)
     server_public_key: Mapped[str] = mapped_column(Text, nullable=False)

@@ -45,7 +45,7 @@ class HAProxyService:
             backend_name = f"bk_hvpn_{tunnel.subdomain}"
             backends_lines.append(f"backend {backend_name}")
             backends_lines.append(
-                f"    server srv1 {tunnel.vpn_ip}:{tunnel.target_port} check inter 10s fall 3 rise 2"
+                f"    server srv1 {tunnel.device_ip}:{tunnel.target_port} check inter 10s fall 3 rise 2"
             )
             backends_lines.append("")
             map_entries.append(f"{tunnel.subdomain} {backend_name}")

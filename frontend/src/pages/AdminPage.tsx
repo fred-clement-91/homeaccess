@@ -478,7 +478,9 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                                   <span>Port {t.target_port}</span>
                                   <span>·</span>
-                                  <span>{t.vpn_ip}</span>
+                                  <span>VPN {t.vpn_ip}</span>
+                                  <span>·</span>
+                                  <span>Device {t.device_ip}</span>
                                   <span>·</span>
                                   <span>{formatDate(t.created_at)}</span>
                                 </div>

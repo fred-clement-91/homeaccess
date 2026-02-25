@@ -139,7 +139,9 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
         <ServerIcon className="w-3.5 h-3.5" />
         <span>Port {tunnel.target_port}</span>
         <span className="text-gray-700">|</span>
-        <span>{tunnel.vpn_ip}</span>
+        <span>VPN {tunnel.vpn_ip}</span>
+        <span className="text-gray-700">|</span>
+        <span>Device {tunnel.device_ip}</span>
       </div>
 
       {/* Actions */}

@@ -11,6 +11,7 @@ export interface Tunnel {
   subdomain: string;
   target_port: number;
   vpn_ip: string;
+  device_ip: string;
   is_active: boolean;
   full_domain: string;
   created_at: string;
@@ -42,6 +43,7 @@ export interface AdminTunnel {
   subdomain: string;
   target_port: number;
   vpn_ip: string;
+  device_ip: string;
   is_active: boolean;
   full_domain: string;
   created_at: string;

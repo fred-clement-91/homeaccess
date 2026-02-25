@@ -35,9 +35,10 @@ class WireGuardService:
         ).decode().strip()
         return output
 
-    def add_peer(self, public_key: str, allowed_ip: str) -> None:
+    def add_peer(self, public_key: str, vpn_ip: str, device_ip: str) -> None:
+        allowed_ips = f"{vpn_ip}/32,{device_ip}/32"
         subprocess.run(
-            ["sudo", "wg", "set", self.interface, "peer", public_key, "allowed-ips", f"{allowed_ip}/32"],
+            ["sudo", "wg", "set", self.interface, "peer", public_key, "allowed-ips", allowed_ips],
             check=True,
         )
         subprocess.run(["sudo", "wg-quick", "save", self.interface], check=True)
@@ -106,7 +107,8 @@ class WireGuardService:
     def generate_client_config(
         self,
         private_key: str,
-        address: str,
+        vpn_ip: str,
+        device_ip: str,
         server_public_key: str,
     ) -> str:
         # AllowedIPs = server VPN IP so client can:
@@ -114,9 +116,13 @@ class WireGuardService:
         #   - Route responses back to server through the tunnel
         # NOT 0.0.0.0/0 to prevent client using VPN as internet proxy
         server_vpn_ip = settings.vpn_server_ip
-        return f"""[Interface]
+        return f"""# IP de l'equipement cible : {device_ip}
+# Assignez cette IP directement a votre equipement (camera, NAS...)
+# et activez ip_forward sur ce routeur WireGuard.
+
+[Interface]
 PrivateKey = {private_key}
-Address = {address}/32
+Address = {vpn_ip}/32
 DNS = 1.1.1.1
 
 [Peer]

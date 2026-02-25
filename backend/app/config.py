@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     haproxy_map_path: str = "/etc/haproxy/homevpn-subdomains.map"
     vpn_subnet: str = "172.16.0.0/16"
     vpn_server_ip: str = "172.16.0.1"
+    device_subnet: str = "10.100.0.0/16"
+    device_gateway_ip: str = "10.100.0.1"
     domain: str = "homeaccess.site"
     max_tunnels_per_user: int = 5
     certbot_http_port: int = 8402
