@@ -16,6 +16,7 @@ from app.services.crypto import decrypt_key, encrypt_key
 from app.services.certbot import certbot_service
 from app.services.haproxy import haproxy_service
 from app.services.ip_allocator import ip_allocator
+from app.services.email import send_tunnel_created_email
 from app.services.wireguard import wireguard_service
 
 router = APIRouter()
@@ -160,6 +161,27 @@ async def create_tunnel(
     certbot_service.request_cert(subdomain)
 
     await log_activity(user.email, "tunnel_create", detail=subdomain)
+
+    # Send welcome email with WireGuard config attached
+    try:
+        private_key = decrypt_key(tunnel.client_private_key)
+        config_text = wireguard_service.generate_client_config(
+            private_key=private_key,
+            vpn_ip=vpn_ip,
+            device_ip=device_ip,
+            server_public_key=tunnel.server_public_key,
+        )
+        send_tunnel_created_email(
+            to_email=user.email,
+            subdomain=subdomain,
+            full_domain=f"{subdomain}.{settings.domain}",
+            vpn_ip=vpn_ip,
+            device_ip=device_ip,
+            target_port=data.target_port,
+            config_text=config_text,
+        )
+    except Exception:
+        pass  # non-blocking: don't fail tunnel creation if email fails
 
     return _to_response(tunnel)
 
