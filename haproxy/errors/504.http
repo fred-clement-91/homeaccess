@@ -1,4 +1,4 @@
-HTTP/1.0 503 Service Unavailable
+HTTP/1.0 504 Gateway Time-out
 Cache-Control: no-cache
 Connection: close
 Content-Type: text/html; charset=utf-8
@@ -8,7 +8,7 @@ Content-Type: text/html; charset=utf-8
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>503 — Service indisponible</title>
+<title>504 — D&eacute;lai de la passerelle</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#030712;color:#f3f4f6;padding:1.5rem}
@@ -31,9 +31,9 @@ body{min-height:100vh;display:flex;align-items:center;justify-content:center;fon
     <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#9333ea"/></linearGradient></defs><rect width="32" height="32" rx="7" fill="url(#g)"/><g transform="translate(6,6)" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="9"/><path d="M1.5 10h17"/><path d="M10 1c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9"/><path d="M10 1c-2.5 2.5-4 5.5-4 9s1.5 6.5 4 9"/></g></svg>
     <span>HomeAccess</span>
   </a>
-  <div class="code">503</div>
-  <div class="title">Service indisponible</div>
-  <p class="msg">Le tunnel est actuellement hors ligne.<br>V&eacute;rifiez que votre connexion WireGuard est active.</p>
+  <div class="code">504</div>
+  <div class="title">D&eacute;lai de la passerelle</div>
+  <p class="msg">Le serveur en amont n'a pas r&eacute;pondu &agrave; temps.<br>Veuillez r&eacute;essayer dans quelques instants.</p>
   <a href="https://homeaccess.site" class="btn">D&eacute;couvrir HomeAccess</a>
   <div class="foot">Propuls&eacute; par <a href="https://homeaccess.site">homeaccess.site</a></div>
 </div>
