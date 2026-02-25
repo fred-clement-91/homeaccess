@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
   ArrowRightStartOnRectangleIcon,
+  BookOpenIcon,
   ChatBubbleLeftEllipsisIcon,
   GlobeAltIcon,
   ShieldCheckIcon,
@@ -34,6 +35,13 @@ export default function Layout({ children }: { children: ReactNode }) {
                   Admin
                 </Link>
               )}
+              <Link
+                to="/docs"
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                <BookOpenIcon className="w-4 h-4" />
+                Docs
+              </Link>
               <Link
                 to="/contact"
                 className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"

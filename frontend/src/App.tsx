@@ -10,6 +10,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminPage from "./pages/AdminPage";
 import ContactPage from "./pages/ContactPage";
+import DocsPage from "./pages/DocsPage";
 
 export default function App() {
   return (
@@ -26,6 +27,16 @@ export default function App() {
             <ProtectedRoute>
               <Layout>
                 <DashboardPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/docs"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <DocsPage />
               </Layout>
             </ProtectedRoute>
           }
