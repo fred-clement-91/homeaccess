@@ -323,6 +323,11 @@ export default function AdminPage() {
                               Admin
                             </span>
                           )}
+                          {u.is_beta_tester && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                              Bêta
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                           <span>
@@ -366,6 +371,19 @@ export default function AdminPage() {
 
                       {!u.is_admin && (
                         <>
+                          <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800/50 border border-gray-700/50 cursor-pointer hover:bg-gray-800 transition-all">
+                            <input
+                              type="checkbox"
+                              checked={u.is_beta_tester}
+                              onChange={async () => {
+                                await api.patch(`/admin/users/${u.id}`, { is_beta_tester: !u.is_beta_tester });
+                                fetchUsers();
+                              }}
+                              className="accent-purple-500 cursor-pointer"
+                            />
+                            <span className="text-xs text-gray-400">Compte gratuit</span>
+                          </label>
+
                           {confirmBan === u.id ? (
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs text-gray-400">

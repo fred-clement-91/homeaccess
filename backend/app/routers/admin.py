@@ -44,6 +44,7 @@ async def list_users(
             is_active=user.is_active,
             is_verified=user.is_verified,
             is_admin=user.is_admin,
+            is_beta_tester=user.is_beta_tester,
             max_tunnels=user.max_tunnels,
             tunnel_count=tc,
             created_at=user.created_at,
@@ -83,6 +84,8 @@ async def update_user(
                     wireguard_service.remove_peer(tunnel.client_public_key)
             except Exception:
                 pass
+    if data.is_beta_tester is not None:
+        user.is_beta_tester = data.is_beta_tester
     if data.max_tunnels is not None:
         old_max = user.max_tunnels
         user.max_tunnels = data.max_tunnels
@@ -108,6 +111,7 @@ async def update_user(
         is_active=user.is_active,
         is_verified=user.is_verified,
         is_admin=user.is_admin,
+        is_beta_tester=user.is_beta_tester,
         max_tunnels=user.max_tunnels,
         tunnel_count=tunnel_count,
         created_at=user.created_at,

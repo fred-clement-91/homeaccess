@@ -195,6 +195,7 @@ async def get_me(
         id=user.id,
         email=user.email,
         is_admin=user.is_admin,
+        is_beta_tester=user.is_beta_tester,
         max_tunnels=user.max_tunnels,
         tunnel_count=tunnel_count,
     )

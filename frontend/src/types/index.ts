@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   is_admin: boolean;
+  is_beta_tester: boolean;
   max_tunnels: number;
   tunnel_count: number;
 }
@@ -31,6 +32,7 @@ export interface AdminUser {
   is_active: boolean;
   is_verified: boolean;
   is_admin: boolean;
+  is_beta_tester: boolean;
   max_tunnels: number;
   tunnel_count: number;
   created_at: string;
