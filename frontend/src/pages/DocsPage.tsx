@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import {
   BookOpenIcon,
   ServerIcon,
@@ -87,6 +88,14 @@ const TOC = [
 export default function DocsPage() {
   return (
     <div className="max-w-3xl mx-auto">
+      <Helmet>
+        <title>Guide d'installation — HomeAccess</title>
+        <meta name="description" content="Guide complet pour configurer votre tunnel WireGuard HomeAccess. Schéma réseau, configuration du routeur, accès à vos équipements." />
+        <link rel="canonical" href="https://homeaccess.site/docs" />
+        <meta property="og:title" content="Guide d'installation — HomeAccess" />
+        <meta property="og:description" content="Guide complet pour configurer votre tunnel WireGuard HomeAccess. Schéma réseau, configuration du routeur, accès à vos équipements." />
+        <meta property="og:url" content="https://homeaccess.site/docs" />
+      </Helmet>
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-2">

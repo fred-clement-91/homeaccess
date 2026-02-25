@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   GlobeAltIcon,
   ShieldCheckIcon,
@@ -76,6 +77,14 @@ const features = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      <Helmet>
+        <title>HomeAccess — Accès distant sécurisé sans IP fixe</title>
+        <meta name="description" content="Accédez à vos caméras, NAS et domotique depuis partout. Tunnel WireGuard sécurisé, sous-domaine et SSL automatique. Sans IP fixe." />
+        <link rel="canonical" href="https://homeaccess.site/" />
+        <meta property="og:title" content="HomeAccess — Accès distant sécurisé sans IP fixe" />
+        <meta property="og:description" content="Accédez à vos caméras, NAS et domotique depuis partout. Tunnel WireGuard sécurisé, sous-domaine et SSL automatique." />
+        <meta property="og:url" content="https://homeaccess.site/" />
+      </Helmet>
       {/* Navbar */}
       <nav className="border-b border-gray-800/50 backdrop-blur-xl bg-gray-950/80 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">

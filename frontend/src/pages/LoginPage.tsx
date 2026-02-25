@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "../contexts/AuthContext";
 import {
   GlobeAltIcon,
@@ -91,6 +92,14 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-gray-950">
+      <Helmet>
+        <title>Connexion — HomeAccess</title>
+        <meta name="description" content="Connectez-vous à HomeAccess pour gérer vos tunnels VPN WireGuard et accéder à vos équipements à distance." />
+        <link rel="canonical" href="https://homeaccess.site/login" />
+        <meta property="og:title" content="Connexion — HomeAccess" />
+        <meta property="og:description" content="Connectez-vous à HomeAccess pour gérer vos tunnels VPN WireGuard et accéder à vos équipements à distance." />
+        <meta property="og:url" content="https://homeaccess.site/login" />
+      </Helmet>
       {/* Left panel — visual / marketing */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center">
         {/* Background glow */}
