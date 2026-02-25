@@ -14,6 +14,7 @@ import {
 import api from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
 import type { AdminUser, AdminTunnel } from "../types";
+import ServiceLogo from "../components/ServiceLogo";
 
 interface ActivityEntry {
   id: string;
@@ -486,7 +487,8 @@ export default function AdminPage() {
                               key={t.id}
                               className="flex items-center justify-between gap-4 bg-gray-800/40 border border-gray-700/40 rounded-lg px-4 py-3"
                             >
-                              <div className="min-w-0">
+                              <ServiceLogo serviceType={t.service_type} className="w-8 h-8 rounded-lg" />
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-3">
                                   <a
                                     href={`https://${t.subdomain}.homeaccess.site`}

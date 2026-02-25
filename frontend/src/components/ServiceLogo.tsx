@@ -43,6 +43,15 @@ const SERVICES: Record<string, { name: string; color: string; icon: ReactNode }>
       </svg>
     ),
   },
+  camera: {
+    name: "Caméra IP",
+    color: "from-rose-500/20 to-red-500/20",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-rose-400">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3.5a3 3 0 110 6 3 3 0 010-6zM12 20c-2.03 0-3.86-.77-5.25-2.03A6.98 6.98 0 0112 14.5c2.17 0 4.13.98 5.25 2.47A7.96 7.96 0 0112 20z" />
+      </svg>
+    ),
+  },
   http: {
     name: "HTTP",
     color: "from-gray-500/20 to-slate-500/20",
@@ -55,7 +64,7 @@ export default function ServiceLogo({ serviceType, className = "" }: Props) {
 
   if (!service) {
     return (
-      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0 ${className}`}>
+      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0 ${className}`} title={serviceType || "Autre"}>
         <GlobeAltIcon className="w-5 h-5 text-indigo-400" />
       </div>
     );

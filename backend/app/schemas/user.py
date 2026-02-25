@@ -64,8 +64,10 @@ class AdminTunnelResponse(BaseModel):
     user_email: str
     subdomain: str
     target_port: int
+    service_type: str | None = None
     vpn_ip: str
     device_ip: str
+    use_device_ip: bool
     is_active: bool
     full_domain: str
     created_at: datetime

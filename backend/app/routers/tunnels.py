@@ -36,6 +36,7 @@ def _to_response(tunnel: Tunnel) -> TunnelResponse:
         service_type=tunnel.service_type,
         vpn_ip=str(tunnel.vpn_ip),
         device_ip=str(tunnel.device_ip),
+        use_device_ip=tunnel.use_device_ip,
         is_active=tunnel.is_active,
         full_domain=f"{tunnel.subdomain}.{settings.domain}",
         created_at=tunnel.created_at,
@@ -135,6 +136,7 @@ async def create_tunnel(
         subdomain=subdomain,
         target_port=data.target_port,
         service_type=data.service_type,
+        use_device_ip=data.use_device_ip,
         vpn_ip=vpn_ip,
         device_ip=device_ip,
         client_private_key=encrypt_key(private_key),
@@ -209,6 +211,8 @@ async def update_tunnel(
 
     if data.target_port is not None:
         tunnel.target_port = data.target_port
+    if data.use_device_ip is not None:
+        tunnel.use_device_ip = data.use_device_ip
     if data.is_active is not None:
         tunnel.is_active = data.is_active
         if data.is_active:

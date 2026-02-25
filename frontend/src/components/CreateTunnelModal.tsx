@@ -18,6 +18,7 @@ const PORT_PRESETS = [
   { label: "Jellyfin", port: 8096, service: "jellyfin" },
   { label: "Nextcloud", port: 443, service: "nextcloud" },
   { label: "Plex", port: 32400, service: "plex" },
+  { label: "Caméra IP", port: 554, service: "camera" },
   { label: "HTTP", port: 80, service: "http" },
   { label: "Perso.", port: 0, service: "custom" },
 ];
@@ -27,6 +28,7 @@ export default function CreateTunnelModal({ open, onClose, onCreated }: Props) {
   const [targetPort, setTargetPort] = useState(8123);
   const [customPort, setCustomPort] = useState("");
   const [selectedPreset, setSelectedPreset] = useState(0);
+  const [useDeviceIp, setUseDeviceIp] = useState(true);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState("");
@@ -84,11 +86,13 @@ export default function CreateTunnelModal({ open, onClose, onCreated }: Props) {
         subdomain: subdomain.toLowerCase(),
         target_port: effectivePort,
         service_type: PORT_PRESETS[selectedPreset].service,
+        use_device_ip: useDeviceIp,
       });
       setSubdomain("");
       setTargetPort(8123);
       setSelectedPreset(0);
       setCustomPort("");
+      setUseDeviceIp(true);
       onCreated();
     } catch (err: unknown) {
       const msg =
@@ -210,6 +214,44 @@ export default function CreateTunnelModal({ open, onClose, onCreated }: Props) {
                   placeholder="Port personnalisé (1-65535)"
                 />
               )}
+            </div>
+
+            {/* Target IP mode */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Adresse cible
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUseDeviceIp(true)}
+                  className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                    useDeviceIp
+                      ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300 border"
+                      : "bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:text-gray-200 hover:border-gray-600"
+                  }`}
+                >
+                  <div>Équipement</div>
+                  <div className="text-xs opacity-60 mt-0.5">IP device (10.x)</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUseDeviceIp(false)}
+                  className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                    !useDeviceIp
+                      ? "bg-indigo-600/20 border-indigo-500/50 text-indigo-300 border"
+                      : "bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:text-gray-200 hover:border-gray-600"
+                  }`}
+                >
+                  <div>VPN direct</div>
+                  <div className="text-xs opacity-60 mt-0.5">IP VPN (172.x)</div>
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                {useDeviceIp
+                  ? "Le trafic sera envoyé vers l'équipement derrière le routeur WireGuard."
+                  : "Le trafic sera envoyé directement au pair VPN (service sur la même machine)."}
+              </p>
             </div>
 
             {/* Preview */}

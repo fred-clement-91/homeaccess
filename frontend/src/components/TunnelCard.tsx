@@ -24,7 +24,7 @@ interface Props {
   connected: boolean;
   connectedSince: number;
   onDelete: () => void;
-  onToggle: (id: string, isActive: boolean) => void;
+  onToggle: (id: string, data: Record<string, unknown>) => void;
 }
 
 export default function TunnelCard({ tunnel, connected, connectedSince, onDelete, onToggle }: Props) {
@@ -100,7 +100,7 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
           </span>
         </div>
         <button
-          onClick={() => onToggle(tunnel.id, !tunnel.is_active)}
+          onClick={() => onToggle(tunnel.id, { is_active: !tunnel.is_active })}
           className={`relative w-10 h-5.5 rounded-full transition-colors cursor-pointer ${
             tunnel.is_active ? "bg-indigo-600" : "bg-gray-700"
           }`}
@@ -147,13 +147,42 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
       </div>
 
       {/* Details */}
-      <div className="flex items-center gap-2 text-xs text-gray-400 mb-5">
+      <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
         <ServerIcon className="w-3.5 h-3.5" />
         <span>Port {tunnel.target_port}</span>
         <span className="text-gray-700">|</span>
         <span>VPN {tunnel.vpn_ip}</span>
         <span className="text-gray-700">|</span>
         <span>Device {tunnel.device_ip}</span>
+      </div>
+
+      {/* Target IP toggle */}
+      <div className="flex items-center gap-2 text-xs mb-5">
+        <span className="text-gray-500">Cible :</span>
+        <div className="flex rounded-lg overflow-hidden border border-gray-700/50">
+          <button
+            onClick={() => { if (!tunnel.use_device_ip) onToggle(tunnel.id, { use_device_ip: true }); }}
+            className={`px-2.5 py-1 font-medium transition-all cursor-pointer ${
+              tunnel.use_device_ip
+                ? "bg-blue-500/20 text-blue-400"
+                : "bg-gray-800/50 text-gray-500 hover:text-gray-300"
+            }`}
+            title="Trafic vers l'équipement derrière le routeur WireGuard"
+          >
+            Équipement
+          </button>
+          <button
+            onClick={() => { if (tunnel.use_device_ip) onToggle(tunnel.id, { use_device_ip: false }); }}
+            className={`px-2.5 py-1 font-medium transition-all cursor-pointer ${
+              !tunnel.use_device_ip
+                ? "bg-purple-500/20 text-purple-400"
+                : "bg-gray-800/50 text-gray-500 hover:text-gray-300"
+            }`}
+            title="Trafic directement vers le pair VPN"
+          >
+            VPN direct
+          </button>
+        </div>
       </div>
 
       {/* Actions */}

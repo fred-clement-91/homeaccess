@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import TunnelCard from "../components/TunnelCard";
 import CreateTunnelModal from "../components/CreateTunnelModal";
 import type { Tunnel } from "../types";
+import SupportBanner from "../components/SupportBanner";
 
 export default function DashboardPage() {
   const { user, refreshUser } = useAuth();
@@ -55,8 +56,8 @@ export default function DashboardPage() {
     refreshUser();
   };
 
-  const handleToggle = async (id: string, isActive: boolean) => {
-    await api.patch(`/tunnels/${id}`, { is_active: isActive });
+  const handleToggle = async (id: string, data: Record<string, unknown>) => {
+    await api.patch(`/tunnels/${id}`, data);
     fetchTunnels();
     fetchStatus();
   };
@@ -127,6 +128,8 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+
+      <SupportBanner />
 
       <CreateTunnelModal
         open={showCreate}
