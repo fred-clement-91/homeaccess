@@ -9,6 +9,7 @@ import {
   UsersIcon,
   ClockIcon,
   MagnifyingGlassIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import api from "../api/client";
 import { useAuth } from "../contexts/AuthContext";
@@ -447,12 +448,18 @@ export default function AdminPage() {
                             >
                               <div className="min-w-0">
                                 <div className="flex items-center gap-3">
-                                  <p className="text-white text-sm font-medium">
+                                  <a
+                                    href={`https://${t.subdomain}.homeaccess.site`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-white font-medium hover:text-indigo-400 transition-colors"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     {t.subdomain}
                                     <span className="text-gray-600 font-normal">
                                       .homeaccess.site
                                     </span>
-                                  </p>
+                                  </a>
                                   {t.is_active && (
                                     <div
                                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -518,24 +525,34 @@ export default function AdminPage() {
       {/* ======== Activity tab ======== */}
       {tab === "activity" && (
         <div>
-          {/* Search bar */}
-          <div className="relative mb-4">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Rechercher par email, action, détail..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-900/50 border border-gray-800/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
-            />
-            {search && (
-              <button
-                onClick={() => handleSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-xs cursor-pointer"
-              >
-                Effacer
-              </button>
-            )}
+          {/* Search bar + refresh */}
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Rechercher par email, action, détail..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-900/50 border border-gray-800/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition-all"
+              />
+              {search && (
+                <button
+                  onClick={() => handleSearchChange("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-xs cursor-pointer"
+                >
+                  Effacer
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => fetchActivity(0, false, activeSearch)}
+              disabled={activityLoading}
+              title="Rafraîchir"
+              className="px-3 py-2.5 rounded-xl bg-gray-900/50 border border-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-800/50 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <ArrowPathIcon className={`w-4 h-4 ${activityLoading ? "animate-spin" : ""}`} />
+            </button>
           </div>
 
           {/* Activity list */}

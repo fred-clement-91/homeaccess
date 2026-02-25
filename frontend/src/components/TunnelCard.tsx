@@ -105,12 +105,20 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
           <GlobeAltIcon className="w-5 h-5 text-indigo-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-white truncate">
-            {tunnel.subdomain}
-          </h3>
-          <p className="text-xs text-gray-500 truncate">
-            {tunnel.full_domain}
-          </p>
+          <a
+            href={`https://${tunnel.full_domain}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group/link block"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-white truncate text-lg group-hover/link:text-indigo-400 transition-colors">
+              {tunnel.subdomain}
+            </h3>
+            <p className="text-sm text-gray-500 truncate group-hover/link:text-indigo-400/70 transition-colors">
+              {tunnel.full_domain}
+            </p>
+          </a>
           {tunnel.is_active && (
             <div
               className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
