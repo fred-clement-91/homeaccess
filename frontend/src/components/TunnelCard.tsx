@@ -5,9 +5,11 @@ import {
   GlobeAltIcon,
   ServerIcon,
   LinkIcon,
+  QrCodeIcon,
 } from "@heroicons/react/24/outline";
 import api from "../api/client";
 import type { Tunnel } from "../types";
+import QRCodeModal from "./QRCodeModal";
 
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -28,6 +30,8 @@ interface Props {
 export default function TunnelCard({ tunnel, connected, connectedSince, onDelete, onToggle }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [configText, setConfigText] = useState("");
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
 
   // Update "now" every second when connected to keep duration live
@@ -63,6 +67,16 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
     a.download = `homevpn-${tunnel.subdomain}.conf`;
     a.click();
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleShowQR = async () => {
+    try {
+      const { data } = await api.get(`/tunnels/${tunnel.id}/config`);
+      setConfigText(data);
+      setShowQR(true);
+    } catch {
+      // ignore
+    }
   };
 
   return (
@@ -153,6 +167,13 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
           <ArrowDownTrayIcon className="w-4 h-4" />
           Config WG
         </button>
+        <button
+          onClick={handleShowQR}
+          className="px-3 py-2 rounded-xl bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:text-indigo-400 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all cursor-pointer"
+          title="QR Code WireGuard"
+        >
+          <QrCodeIcon className="w-4 h-4" />
+        </button>
         {showConfirm ? (
           <div className="flex gap-2">
             <button
@@ -178,6 +199,13 @@ export default function TunnelCard({ tunnel, connected, connectedSince, onDelete
           </button>
         )}
       </div>
+
+      <QRCodeModal
+        open={showQR}
+        onClose={() => setShowQR(false)}
+        subdomain={tunnel.subdomain}
+        configText={configText}
+      />
     </div>
   );
 }
